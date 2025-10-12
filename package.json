@@ -11,9 +11,18 @@
   },
   "dependencies": {
     "@nuxt/ui": "^4.0.1",
+    "@prisma/client": "^6.17.1",
+    "@supabase/supabase-js": "^2.75.0",
+    "bcrypt": "^6.0.0",
+    "jsonwebtoken": "^9.0.2",
     "nuxt": "^4.1.2",
+    "prisma": "^6.17.1",
     "typescript": "^5.9.3",
     "vue": "^3.5.22",
     "vue-router": "^4.5.1"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/jsonwebtoken": "^9.0.10"
   }
 }

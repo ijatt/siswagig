@@ -5,19 +5,9 @@
         <Icon name="fluent-hat-graduation-12-filled"/>
         <p class="">SiswaGig</p>
       </template>
-      <UInput icon="i-lucide-search" size="md" variant="outline" placeholder="Search..." />
 
       <template #right>
         <UColorModeButton />
-
-        <UButton
-          color="neutral"
-          variant="ghost"
-          to="https://github.com/nuxt/ui"
-          target="_blank"
-          icon="i-simple-icons-github"
-          aria-label="GitHub"
-        />
       </template>
 
       <template #body>

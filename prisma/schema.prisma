@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  user_id   Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      String
+  location  String?
+  created_at DateTime @default(now())
+  bio       String?
+  skill_id  Int?
+
+  // Relationships
+  skill         Skill?        @relation(fields: [skill_id], references: [skill_id])
+  userSkills    UserSkill[]
+  jobs          Job[]
+  applications  Application[]
+  reviewsFrom   Review[]      @relation("ReviewsFromUser")
+  reviewsTo     Review[]      @relation("ReviewsToUser")
+}
+
+model Skill {
+  skill_id  Int         @id @default(autoincrement())
+  name      String
+
+  userSkills UserSkill[]
+  users      User[]
+}
+
+model UserSkill {
+  user_id  Int
+  skill_id Int
+
+  user  User @relation(fields: [user_id], references: [user_id])
+  skill Skill @relation(fields: [skill_id], references: [skill_id])
+
+  @@id([user_id, skill_id])
+}
+
+model Job {
+  job_id     Int      @id @default(autoincrement())
+  title      String
+  description String
+  category   String
+  location   String
+  budget     Float
+  deadline   DateTime
+  created_at DateTime @default(now())
+  status     String
+  user_id    Int
+
+  // Relationships
+  user         User         @relation(fields: [user_id], references: [user_id])
+  applications Application[]
+  reviews      Review[]
+}
+
+model Application {
+  application_id Int      @id @default(autoincrement())
+  cover_letter   String
+  status         String
+  created_at     DateTime @default(now())
+  job_id         Int
+  user_id        Int
+
+  // Relationships
+  job  Job  @relation(fields: [job_id], references: [job_id])
+  user User @relation(fields: [user_id], references: [user_id])
+}
+
+model Review {
+  review_id   Int      @id @default(autoincrement())
+  rating      Int
+  comment     String
+  created_at  DateTime @default(now())
+  job_id      Int
+  from_user_id Int
+  to_user_id   Int
+
+  // Relationships
+  job       Job  @relation(fields: [job_id], references: [job_id])
+  fromUser  User @relation("ReviewsFromUser", fields: [from_user_id], references: [user_id])
+  toUser    User @relation("ReviewsToUser", fields: [to_user_id], references: [user_id])
+}
