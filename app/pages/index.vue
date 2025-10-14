@@ -48,24 +48,27 @@
 </template>
 
 <script lang="ts" setup>
+definePageMeta({
+  middleware: "guest"
+})
 const features = ref([
   {
     title: 'Smart Job Matching',
     description: 'AI recommends freelance jobs that fit your skills, preferences, and location for better matching.',
     icon: 'i-lucide-brain',
-    to: '/features/ai-matching'
+    to: '#'
   },
   {
     title: 'Location-Based Projects',
     description: 'Find nearby projects using geolocation to collaborate easily with clients in your area.',
     icon: 'i-lucide-map-pin',
-    to: '/features/location'
+    to: '#'
   },
   {
     title: 'Secure Collaboration',
     description: 'Built-in chat and project management tools help students and clients work together seamlessly.',
     icon: 'i-lucide-message-circle',
-    to: '/features/chat'
+    to: '#'
   }
 ])
 const jobs = ref([
@@ -110,6 +113,4 @@ const jobs = ref([
       "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D-focus-photography-of-woman-outdoor-during-day-rDEOVtE7vOs",
   },
 ];
-
-
 </script>
