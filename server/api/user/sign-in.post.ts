@@ -1,5 +1,4 @@
-import { PrismaClient, Prisma } from "@prisma/client" 
-
+import { PrismaClient } from "@prisma/client";
 interface UserSignInRequest {
   email: string;
   password: string;
@@ -39,16 +38,16 @@ export default defineEventHandler(async (event) => {
 
     return user.name
 
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2025") {
-        return createError({ statusCode: 400, statusMessage: "User not found" })
-      } else {
-        return createError({ statusCode: 500, statusMessage: "Prisma Server Error" })
-      }
-    }
-    console.log(error);
+  } catch (error) {}
+  //   if (error instanceof Prisma.PrismaClientKnownRequestError) {
+  //     if (error.code === "P2025") {
+  //       return createError({ statusCode: 400, statusMessage: "User not found" })
+  //     } else {
+  //       return createError({ statusCode: 500, statusMessage: "Prisma Server Error" })
+  //     }
+  //   }
+  //   console.log(error);
     
-    return createError({ statusCode: 500, statusMessage: String(error) })
-  }
+  //   return createError({ statusCode: 500, statusMessage: String(error) })
+  // }
 })

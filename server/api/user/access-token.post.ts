@@ -9,10 +9,6 @@ export default defineEventHandler(async (event) => {
 
     const decodedToken = verifyToken(cookie)  
     if(!decodedToken) return createError({ statusCode: 401, statusMessage: "User session is not valid" })
-    
-    if (!prisma) {
-      return createError({ statusCode: 500, statusMessage: "Internal Server Error" })
-    }
 
     const user = await prisma.user.findUniqueOrThrow({
       where: {
