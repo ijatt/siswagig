@@ -1,43 +1,32 @@
 <script setup lang="ts">
+definePageMeta({
+  middleware: "auth",
+});
+
+import type { Job } from "~/types/types";
+
+const route = useRoute();
+
+const { data } = useNuxtData(`jobs`);
+const {
+  data: job,
+  error,
+  refresh,
+} = await useFetch(`/api/jobs`, {
+  key: `jobs`,
+  method: "get",
+  default() {
+    return data.value as Job[];
+  },
+});
+
+const jobs = ref<Job[]>(job.value as Job[]);
+
 const activeTab = ref("jobs");
 const searchQuery = ref("");
 const category = ref(null);
 
-const categories = [
-  { label: "All Categories", value: null },
-  { label: "Design", value: "design" },
-  { label: "Web Development", value: "web" },
-  { label: "Writing", value: "writing" },
-  { label: "Tutoring", value: "tutoring" },
-];
 
-// Example data — you’ll replace this later with API data
-const jobs = [
-  {
-    title: "Design a UiTM Event Poster",
-    description:
-      "Looking for a creative student to design an A3 poster for an upcoming UiTM event.",
-    price: "RM50",
-    location: "Shah Alam",
-    category: "Design",
-  },
-  {
-    title: "Build a Faculty Blog Website",
-    description:
-      "Need a frontend developer to create a simple Nuxt site for our faculty news.",
-    price: "RM150",
-    location: "Kuala Pilah",
-    category: "Web Development",
-  },
-  {
-    title: "Proofread Final Year Project Report",
-    description:
-      "Seeking a detail-oriented student to proofread grammar and formatting for a 50-page FYP report.",
-    price: "RM40",
-    location: "Seremban",
-    category: "Writing",
-  },
-];
 
 const freelancers = [
   {
@@ -57,10 +46,37 @@ const freelancers = [
       "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D-focus-photography-of-woman-outdoor-during-day-rDEOVtE7vOs",
   },
 ];
+
+interface User {
+  user_id: number | null;
+  name: string | null;
+  email: string | null;
+  role: string | null;
+  imageUrl: string | null;
+}
+
+const user = ref<User>({
+  user_id: null,
+  name: null,
+  email: null,
+  role: null,
+  imageUrl: null,
+});
+
+onMounted(async () => {
+  user.value = await $fetch("/api/user", {
+    method: "GET",
+    headers: {
+      authorization: `Bearer ${useMyTokenStore().accessToken}`,
+    },
+  });
+
+  if (user.value) userStore().user = user.value;
+});
 </script>
 
 <template>
-  <div class="p-8 space-y-8">
+  <div class="p-8 space-y-8 max-w-5xl mx-auto  rounded-lg ">
     <!-- Header -->
     <UPageHeader
       title="Explore Opportunities"
@@ -79,11 +95,13 @@ const freelancers = [
     <p class="font-bold text-lg tracking-wide">Discover Jobs</p>
     <UPageGrid>
       <UPageCard
+        class="cursor-pointer"
         v-for="(job, i) in jobs"
         :key="i"
         :title="job.title"
         :description="job.description"
         spotlight
+        @click="navigateTo(`jobs/${job.job_id}`)"
       ></UPageCard>
     </UPageGrid>
     <div class="flex w-full justify-end">
