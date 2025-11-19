@@ -9,33 +9,36 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
-  user_id   Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  role      String
-  location  String?
+  user_id    Int      @id @default(autoincrement())
+  name       String
+  email      String   @unique
+  password   String
+  role       String
+  location   String?
   created_at DateTime @default(now())
-  bio       String?
-  skill_id  Int?
+  bio        String?
+  skill_id   Int?
+  image_url  String?
 
   // Relationships
-  skill         Skill?        @relation(fields: [skill_id], references: [skill_id])
-  userSkills    UserSkill[]
-  jobs          Job[]
-  applications  Application[]
-  reviewsFrom   Review[]      @relation("ReviewsFromUser")
-  reviewsTo     Review[]      @relation("ReviewsToUser")
+  skill        Skill?        @relation(fields: [skill_id], references: [skill_id])
+  userSkills   UserSkill[]
+  jobs         Job[]
+  applications Application[]
+  reviewsFrom  Review[]      @relation("ReviewsFromUser")
+  reviewsTo    Review[]      @relation("ReviewsToUser")
+  sentMessages Message[]
 }
 
 model Skill {
-  skill_id  Int         @id @default(autoincrement())
-  name      String
+  skill_id Int    @id @default(autoincrement())
+  name     String
 
   userSkills UserSkill[]
   users      User[]
@@ -45,37 +48,41 @@ model UserSkill {
   user_id  Int
   skill_id Int
 
-  user  User @relation(fields: [user_id], references: [user_id])
+  user  User  @relation(fields: [user_id], references: [user_id])
   skill Skill @relation(fields: [skill_id], references: [skill_id])
 
   @@id([user_id, skill_id])
 }
 
 model Job {
-  job_id     Int      @id @default(autoincrement())
-  title      String
+  job_id      Int      @id @default(autoincrement())
+  title       String
   description String
-  category   String
-  location   String
-  budget     Float
-  deadline   DateTime
-  created_at DateTime @default(now())
-  status     String
-  user_id    Int
+  category    String
+  location    String
+  budget      Float
+  deadline    DateTime
+  created_at  DateTime @default(now())
+  status      String
+  user_id     Int
+  image_url   String?
+  requiredSkills String?
 
   // Relationships
-  user         User         @relation(fields: [user_id], references: [user_id])
+  user         User          @relation(fields: [user_id], references: [user_id])
   applications Application[]
   reviews      Review[]
 }
 
 model Application {
-  application_id Int      @id @default(autoincrement())
-  cover_letter   String
-  status         String
-  created_at     DateTime @default(now())
-  job_id         Int
-  user_id        Int
+  application_id       Int      @id @default(autoincrement())
+  cover_letter         String
+  price_offered        Float
+  estimated_completion DateTime
+  status               String
+  created_at           DateTime @default(now())
+  job_id               Int
+  user_id              Int
 
   // Relationships
   job  Job  @relation(fields: [job_id], references: [job_id])
@@ -83,16 +90,52 @@ model Application {
 }
 
 model Review {
-  review_id   Int      @id @default(autoincrement())
-  rating      Int
-  comment     String
-  created_at  DateTime @default(now())
-  job_id      Int
+  review_id    Int      @id @default(autoincrement())
+  rating       Int
+  comment      String
+  created_at   DateTime @default(now())
+  job_id       Int
   from_user_id Int
   to_user_id   Int
 
   // Relationships
-  job       Job  @relation(fields: [job_id], references: [job_id])
-  fromUser  User @relation("ReviewsFromUser", fields: [from_user_id], references: [user_id])
-  toUser    User @relation("ReviewsToUser", fields: [to_user_id], references: [user_id])
+  job      Job  @relation(fields: [job_id], references: [job_id])
+  fromUser User @relation("ReviewsFromUser", fields: [from_user_id], references: [user_id])
+  toUser   User @relation("ReviewsToUser", fields: [to_user_id], references: [user_id])
+}
+
+model Conversation {
+  conversation_id Int      @id @default(autoincrement())
+  participant1_id Int?
+  participant2_id Int?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  // Relationships
+  messages Message[]
+}
+
+model Message {
+  message_id      Int      @id @default(autoincrement())
+  conversation_id Int
+  sender_id       Int
+  content         String
+  created_at      DateTime @default(now())
+  is_read         Boolean  @default(false)
+
+  // Relationships
+  conversation Conversation      @relation(fields: [conversation_id], references: [conversation_id], onDelete: Cascade)
+  sender       User              @relation(fields: [sender_id], references: [user_id])
+  attachments  MessageAttachment[]
+}
+
+model MessageAttachment {
+  attachment_id Int    @id @default(autoincrement())
+  message_id    Int
+  file_url      String
+  file_name     String
+  file_type     String
+
+  // Relationships
+  message Message @relation(fields: [message_id], references: [message_id], onDelete: Cascade)
 }
