@@ -7,6 +7,7 @@ interface User {
   email: string | null
   role: string | null
   imageUrl: string | null
+  profile_completed: boolean | null
 }
 
 export const userStore = defineStore("user", () => {

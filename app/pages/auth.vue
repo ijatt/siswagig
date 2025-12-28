@@ -129,28 +129,45 @@ type Schema = z.output<typeof schema>
 const toast = useToast()
 
 async function login(payload: FormSubmitEvent<Schema>) {
-  await $fetch("/api/user/sign-in", {
-    method: "POST",
-    body: {
-      email: payload.data.email,
-      password: payload.data.password
+  try {
+    // Clear any existing stores before login
+    userStore().clearUser()
+    useMyTokenStore().clearToken()
+    
+    const res = await $fetch("/api/user/sign-in", {
+      method: "POST",
+      body: {
+        email: payload.data.email,
+        password: payload.data.password
+      }
+    })
+    
+    // Get the new token from access-token endpoint
+    const tokenRes = await $fetch('/api/user/access-token', {
+      method: 'POST'
+    }) as { accessToken: string }
+    
+    if (tokenRes?.accessToken) {
+      useMyTokenStore().setToken(tokenRes.accessToken)
     }
-  }).then(async (res) => {
-    await navigateTo("/explore");
+    
     toast.add({
       id: "login-success",
       title: "Login Success",
       description: `Welcome back, ${res}!`,
       color: "success"
-    });
-  }).catch((error) => 
+    })
+    
+    // Navigate after setting token
+    await navigateTo("/explore")
+  } catch (error: any) {
     toast.add({
       id: "login-error",
       title: "Login Error",
-      description: error.statusMessage,
+      description: error?.statusMessage || 'Login failed',
       color: "error",
     })
-  )
+  }
 }
 
 async function signUp(payload: FormSubmitEvent<Schema>) {
@@ -183,11 +200,11 @@ async function signUp(payload: FormSubmitEvent<Schema>) {
 const currFormActive = ref<string>("login")
 
 const user = userStore()
+const tokenStore = useMyTokenStore()
 
 onMounted(() => {
-  if (user.user != null) {
-    user.user = null
-    user.clearUser()
-  }
+  // Always clear stores when visiting auth page to ensure clean state
+  user.clearUser()
+  tokenStore.clearToken()
 })
 </script>
