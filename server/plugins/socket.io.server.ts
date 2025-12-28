@@ -1,4 +1,18 @@
 import { Server as SocketIOServer } from 'socket.io'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
+
+interface Message {
+  content: string
+  sender_id: number
+  conversation_id: number
+}
+
+interface TypingData {
+  user_id: number
+  conversation_id: number
+}
 
 export default defineNitroPlugin((nitroApp) => {
   let socketServer: SocketIOServer | null = null
@@ -39,12 +53,8 @@ export default defineNitroPlugin((nitroApp) => {
         console.log(`User ${data.user_id} left conversation ${data.conversation_id}`)
       })
 
-      socket.on('send_message', async (message: any) => {
+      socket.on('send_message', async (message: Message) => {
         try {
-          // Import Prisma only when needed
-          const { PrismaClient } = await import('@prisma/client')
-          const prisma = new PrismaClient()
-          
           const savedMessage = await prisma.message.create({
             data: {
               content: message.content,
@@ -72,19 +82,17 @@ export default defineNitroPlugin((nitroApp) => {
           // Emit to conversation room
           socketServer?.to(`conversation_${message.conversation_id}`).emit('new_message', savedMessage)
           console.log('Message saved and broadcasted')
-          
-          await prisma.$disconnect()
         } catch (err) {
           console.error('Error saving message:', err)
           socket.emit('error', 'Failed to save message')
         }
       })
 
-      socket.on('is_typing', (data: any) => {
+      socket.on('is_typing', (data: TypingData) => {
         socketServer?.to(`conversation_${data.conversation_id}`).emit('user_typing', data)
       })
 
-      socket.on('stop_typing', (data: any) => {
+      socket.on('stop_typing', (data: TypingData) => {
         socketServer?.to(`conversation_${data.conversation_id}`).emit('user_stopped_typing', data)
       })
 

@@ -27,7 +27,8 @@ export const getSocketIO = (server?: any): Server => {
     socket.on('join_conversation', async (data) => {
       const { conversation_id, user_id } = data
       socket.join(`conversation_${conversation_id}`)
-
+      console.log('masuk conver');
+      
       if (!activeConversations.has(conversation_id)) {
         activeConversations.set(conversation_id, new Set())
       }
@@ -54,7 +55,8 @@ export const getSocketIO = (server?: any): Server => {
     socket.on('send_message', async (data) => {
       try {
         const { conversation_id, content, sender_id } = data
-
+        console.log('masuk');
+        
         // Save message to database
         const message = await prisma.message.create({
           data: {
