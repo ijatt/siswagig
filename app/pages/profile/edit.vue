@@ -23,9 +23,16 @@
           <div class="sticky top-8 space-y-4">
             <div class="flex flex-col items-center">
               <div class="relative">
-                <UAvatar :src="form.image_url || undefined" size="2xl" class="ring-4 ring-white shadow-lg" />
-                <div class="absolute bottom-0 right-0 bg-blue-600 rounded-full p-2 text-white shadow-lg hover:bg-blue-700 transition cursor-pointer">
-                  <UIcon name="i-heroicons-camera" class="w-4 h-4" />
+                <img :src="form.image_url || undefined" class="w-28 h-28 rounded-full ring-4 ring-white shadow-lg" />
+                <div class="absolute bottom-0 right-0 bg-blue-600 rounded-full px-2 py-1 text-white shadow-lg hover:bg-blue-700 transition cursor-pointer">
+                  <UIcon name="i-heroicons-camera" class="w-4 h-4" @click="fileInput?.click()" />
+                  <input
+                    type="file"
+                    ref="fileInput"
+                    @change="onFileChange"
+                    hidden
+                    accept="image/*"
+                  />
                 </div>
               </div>
               <p class="text-xs text-gray-500 mt-3 text-center">Click camera to change</p>
@@ -59,6 +66,12 @@
                 <UTextarea v-model="form.bio" placeholder="Tell clients about yourself, your experience and what makes you unique..." class="w-full" />
                 <p class="text-xs text-gray-400 mt-2">{{ form.bio?.length || 0 }} characters</p>
               </div>
+            </div>
+
+            <!-- Location Card -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Location & Geolocation</h2>
+              <LocationPicker />
             </div>
 
             <!-- Skills Card -->
@@ -120,6 +133,17 @@ const saving = ref(false)
 const successMessage = ref<string | null>(null)
 const errorMessage = ref<string | null>(null)
 
+const fileInput = ref<HTMLInputElement | null>(null);
+const file = ref<File | null>(); // File object
+
+const onFileChange = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  if (target.files && target.files[0]) {
+    file.value = target.files[0];
+    form.value.image_url = URL.createObjectURL(file.value); // generate preview URL
+  }
+};
+
 async function loadSkills() {
   try {
     loadingSkills.value = true
@@ -127,13 +151,6 @@ async function loadSkills() {
   } catch (err) {
     errorMessage.value = 'Unable to load skills.'
   } finally {
-    //map the skills to follow the format required by USelectMenu
-    // eg {
-//     label: 'Backlog'
-//   },
-//   {
-//     label: 'Todo'
-//   },
     availableSkills.value = availableSkills.value.map(skill => ({ label: skill.name, skill_id: skill.skill_id }))
     loadingSkills.value = false
   }
@@ -170,6 +187,16 @@ async function onSave() {
   saving.value = true
   successMessage.value = null
   errorMessage.value = null
+
+  if (file.value) {
+    try {
+      form.value.image_url = await uploadImage(file.value, "images")
+    } catch (err) {
+      errorMessage.value = 'Unable to upload profile image. Please try again.'
+      saving.value = false
+      return
+    }
+  }
 
   try {
     await $fetch(`/api/user/${form.value.user_id}`, {
