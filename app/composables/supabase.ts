@@ -15,7 +15,7 @@ export async function uploadImage(file: File,folder: string): Promise<string> {
       .upload(`${uuidv4()}.jpg`, file);
 
     if (error) throw error;
-    return data.path;
+    return "https://mfqhyxhmozlirbgxdogq.supabase.co/storage/v1/object/public/images/" + data.path;
   } catch (error) {
     throw error;
   }

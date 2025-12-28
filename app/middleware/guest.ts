@@ -1,8 +1,14 @@
 
-export default defineNuxtRouteMiddleware(async() => {
-    const accessToken = useMyTokenStore().accessToken
+export default defineNuxtRouteMiddleware(async (to, from) => {
+  // Initialize token from localStorage on client side
+  if (process.client) {
+    const tokenStore = useMyTokenStore()
+    tokenStore.initializeToken()
+  }
 
-    if (accessToken) {
-        return await navigateTo("/explore")
-    }
+  const accessToken = useMyTokenStore().accessToken
+
+  if (accessToken) {
+    return navigateTo("/explore")
+  }
 })

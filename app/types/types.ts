@@ -10,6 +10,8 @@ export interface Job {
   image_url: string;
   user: User;
   requiredSkills: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface Client {

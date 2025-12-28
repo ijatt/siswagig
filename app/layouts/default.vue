@@ -1,45 +1,73 @@
 <template>
   <div :class="['min-h-screen', bgClass]">
-    <UHeader>
-      <template #title>
-        <div class="flex items-center gap-x-2">
-          <Icon name="fluent-hat-graduation-12-filled"  class="text-purple-800"/>
-        <p class="font-anton tracking-wider">SiswaGig</p>
+    <!-- Modern Header with Glassmorphism -->
+    <header class="sticky top-0 z-50 glass border-b border-white/20">
+      <UContainer>
+        <div class="flex items-center justify-between h-16">
+          <!-- Logo -->
+          <NuxtLink to="/" class="flex items-center gap-x-2 group">
+            <div class="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+              <Icon name="fluent-hat-graduation-12-filled" class="text-white text-xl"/>
+            </div>
+            <p class="font-anton text-xl tracking-wider text-gradient font-bold">SiswaGig</p>
+          </NuxtLink>
+          
+          <!-- Right Actions -->
+          <div class="flex items-center gap-3">
+            <UColorModeButton class="hover-lift" />
+            <UDropdownMenu
+              v-if="userStore().user != null"
+              :items="dropDownItem"
+            >
+              <UButton
+                class="ring-2 ring-purple-200 hover:ring-purple-400 transition-all rounded-full"
+                :avatar="{
+                  src:
+                    userStore().user?.imageUrl ??
+                    'https://icons.veryicon.com/png/o/miscellaneous/standard/avatar-15.png',
+                }"
+                variant="ghost"
+              />
+            </UDropdownMenu>
+          </div>
         </div>
-      </template>
-      
-      <template #right>
-        <UColorModeButton />
-        <UDropdownMenu
-        v-if="userStore().user != null"
-        :items="dropDownItem">
-          <UButton
-          :avatar="{
-            src:
-              userStore().user?.imageUrl ??
-              'https://icons.veryicon.com/png/o/miscellaneous/standard/avatar-15.png',
-          }"
-          variant="link"
-        />
-        </UDropdownMenu>
-      </template>
-      <template #body> </template>
-    </UHeader>
-    <div v-if="showBackButton" class="max-w-5xl mx-auto py-2" >
-      <UContainer class="py-3">
-        <button @click="goBack" class="font-bold flex items-center gap-2 text-gray-700 hover:text-gray-900 transition">
-          <Icon size="16" name="line-md-arrow-left" /> Back 
+      </UContainer>
+    </header>
+
+    <!-- Back Button -->
+    <div v-if="showBackButton" class="max-w-5xl mx-auto">
+      <UContainer class="py-4">
+        <button 
+          @click="goBack" 
+          class="group flex items-center gap-2 px-4 py-2 rounded-xl text-gray-600 hover:text-purple-700 hover:bg-purple-50 transition-all duration-200"
+        >
+          <Icon size="18" name="line-md-arrow-left" class="group-hover:-translate-x-1 transition-transform" /> 
+          <span class="font-medium">Back</span>
         </button>
       </UContainer>
     </div>
-    <div>
+
+    <!-- Main Content -->
+    <main class="pb-8">
       <slot />
-    </div>
-    <UFooter>
-      <p class="text-muted text-sm">
-        Copyright © {{ new Date().getFullYear() }} SiswaGig
-      </p>
-    </UFooter>
+    </main>
+
+    <!-- Modern Footer -->
+    <footer class="border-t border-gray-100 bg-white/50 backdrop-blur-sm mt-auto">
+      <UContainer>
+        <div class="py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-lg bg-gradient-primary flex items-center justify-center">
+              <Icon name="fluent-hat-graduation-12-filled" class="text-white text-xs"/>
+            </div>
+            <span class="text-sm font-medium text-gray-600">SiswaGig</span>
+          </div>
+          <p class="text-gray-500 text-sm">
+            © {{ new Date().getFullYear() }} SiswaGig. Built for UiTM students.
+          </p>
+        </div>
+      </UContainer>
+    </footer>
   </div>
 </template>
 
@@ -192,14 +220,25 @@ const dropDownItem = computed(() => {
 })
 
 const logout = async () => {
-  await $fetch("api/user/sign-out", {
-    method: "POST"
-  }).then(async () => {
-    userStore().user = null;
-    userStore().clearUser();
-    useMyTokenStore().accessToken = "";
-    await useRouter().push('/auth');
-  });
+  try {
+    await $fetch("api/user/sign-out", {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${useMyTokenStore().accessToken}`
+      }
+    })
+  } catch (err) {
+    console.error('Logout API error:', err)
+  } finally {
+    // Clear user store
+    userStore().clearUser()
+    
+    // Clear token store and localStorage
+    useMyTokenStore().clearToken()
+    
+    // Redirect to auth
+    await useRouter().push('/auth')
+  }
 }
 </script>
 

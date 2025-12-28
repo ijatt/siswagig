@@ -1,116 +1,190 @@
 <template>
-  <UContainer class="py-10 space-y-8 max-w-5xl mx-auto">
-    <!-- Profile Header -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
-      <UCard  class="p-6 md:col-span-1 md:row-span-2">
-        <template #header>
-          <div class="flex justify-center w-full">
-            <img class="rounded-full mx-auto w-24 h-24 border border-slate-300" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Izzah" size="3xl" />
-          </div>
-          <h1 class="text-2xl font-bold text-center">
-            {{ user?.name }}
-          </h1>
-          <p class="text-center">{{ user?.email }}</p>
-        </template>
-        <template #default>
-          <div
-            class="flex flex-col items-center md:justify-between gap-6"
-          >
-            <div class="flex items-center gap-5">
-              <div class="flex items-center gap-1 mt-1">
-                <UIcon
-                  name="i-heroicons-star-20-solid"
-                  class="text-yellow-400"
-                  v-for="n in 5"
-                  :key="n"
-                />
-                <!-- <span class="text-sm text-gray-500 ml-2"
-                  >({{ user?.name }})</span
-                > -->
+  <div class="min-h-screen bg-gradient-to-b from-violet-50/50 to-white">
+    <!-- Profile Hero -->
+    <div class="bg-gradient-to-br from-violet-100 via-white to-blue-50 pattern-dots">
+      <UContainer class="max-w-5xl py-12">
+        <div class="card-modern p-8">
+          <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
+            <!-- Profile Image -->
+            <div class="relative">
+              <img 
+                :src="user?.image_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'" 
+                alt="Profile"
+                class="w-32 h-32 rounded-2xl object-cover ring-4 ring-violet-200 shadow-xl"
+              />
+              <div class="absolute -bottom-2 -right-2 w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center shadow-lg">
+                <UIcon name="i-lucide-verified" class="w-5 h-5 text-white" />
               </div>
             </div>
 
-            <div class="flex gap-2">
-              <template v-if="id == userStore().user?.user_id">
-                <UButton color="primary" icon="i-heroicons-pencil" @click="navigateTo('/profile/edit')">
-                  Edit Profile
-                </UButton>
-              </template>
-              <template v-else>
-                <UButton
-                  color="neutral"
-                  variant="soft"
-                  icon="i-heroicons-chat-bubble-left"
-                  @click="messageFreelancer"
-                >
-                  Message
-                </UButton>
-                <UButton
-                  color="primary"
-                  icon="i-heroicons-briefcase"
-                  @click="hireFreelancer"
-                >
-                  Hire
-                </UButton>
-              </template>
+            <!-- Profile Info -->
+            <div class="flex-1 text-center md:text-left">
+              <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ user?.name }}</h1>
+              <p class="text-gray-500 mb-4">{{ user?.email }}</p>
+              
+              <!-- Rating -->
+              <div class="flex items-center justify-center md:justify-start gap-2 mb-6">
+                <div class="flex items-center gap-1">
+                  <UIcon v-for="n in 5" :key="n" name="i-lucide-star" class="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                </div>
+                <span class="text-sm font-medium text-gray-600">5.0</span>
+                <span class="text-sm text-gray-400">(128 reviews)</span>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="flex flex-wrap justify-center md:justify-start gap-3">
+                <template v-if="id == userStore().user?.user_id">
+                  <button 
+                    @click="navigateTo('/profile/edit')"
+                    class="flex items-center gap-2 px-6 py-3 rounded-xl btn-gradient text-white font-medium shadow-lg hover:shadow-xl transition-all"
+                  >
+                    <UIcon name="i-lucide-pencil" class="w-5 h-5" />
+                    Edit Profile
+                  </button>
+                </template>
+                <template v-else>
+                  <button 
+                    @click="messageFreelancer"
+                    class="flex items-center gap-2 px-6 py-3 rounded-xl bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 transition-colors"
+                  >
+                    <UIcon name="i-lucide-message-circle" class="w-5 h-5" />
+                    Message
+                  </button>
+                  <button 
+                    @click="hireFreelancer"
+                    class="flex items-center gap-2 px-6 py-3 rounded-xl btn-gradient text-white font-medium shadow-lg hover:shadow-xl transition-all"
+                  >
+                    <UIcon name="i-lucide-briefcase" class="w-5 h-5" />
+                    Hire Now
+                  </button>
+                </template>
+              </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="flex md:flex-col gap-6 md:gap-4 text-center">
+              <div class="card-modern px-6 py-4">
+                <p class="text-2xl font-bold text-gradient">{{ user?.jobs?.length || 0 }}</p>
+                <p class="text-xs text-gray-500">Jobs Posted</p>
+              </div>
+              <div class="card-modern px-6 py-4">
+                <p class="text-2xl font-bold text-gradient">100%</p>
+                <p class="text-xs text-gray-500">Completion</p>
+              </div>
             </div>
           </div>
-        </template>
-      </UCard>
-      <UCard class="md:col-span-2">
-        <template #header>
-          <h2 class="text-lg font-semibold">About</h2>
-        </template>
-        <p class="leading-relaxed">
-          {{ user?.bio?? "No bio available." }}
-        </p>
-      </UCard>
-      <UCard class="md:col-start-2 md:col-span-2">
-        <template #header>
-          <h2 class="text-lg font-semibold">Skills</h2>
-        </template>
-        <div v-if="user.userSkills.length > 0" class="flex flex-wrap gap-2">
-          <UBadge
-          
-            v-for="(skill, i) in user?.userSkills"
-            :key="i"
-            color="primary"
-            variant="soft"
-            class="text-sm px-3 py-1"
-          >
-            {{ skill.name }}
-          </UBadge>
         </div>
-        <p v-else>No skills added yet.</p>
-      </UCard>
+      </UContainer>
     </div>
-    <UCard>
-      <template #header>
-        <h2 class="text-lg font-semibold">Portfolio</h2>
-      </template>
 
-      <div class="grid md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-4">
-        <template v-if="user.jobs.length > 0">
-          <UCard
-          v-for="(job, i) in user?.jobs"
-          :key="i"
-          class="hover:shadow-lg transition-shadow duration-200"
-        >
-          <!-- <img
-            src="api.dicebar.com/7.x/avataaars/svg?seed=Izzah"
-            alt="Portfolio item"
-            class="rounded-lg mb-3 object-cover h-40 w-full"
-          /> -->
-          <h3 class="font-semibold">{{ job.title }}</h3>
-          <p class="text-gray-500 text-sm">{{ job.title }}</p>
-        </UCard>
-        </template>
-        <template v-else>
-          <p>No jobs available.</p>
-        </template>
+    <!-- Main Content -->
+    <UContainer class="max-w-5xl py-8">
+      <div class="grid lg:grid-cols-3 gap-8">
+        <!-- Left Column -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- About Card -->
+          <div class="card-modern p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center">
+                <UIcon name="i-lucide-user" class="w-5 h-5 text-white" />
+              </div>
+              <h2 class="text-lg font-bold text-gray-900">About</h2>
+            </div>
+            <p class="text-gray-600 leading-relaxed">
+              {{ user?.bio || "No bio available yet. This freelancer hasn't added their bio." }}
+            </p>
+          </div>
+
+          <!-- Portfolio Card -->
+          <div class="card-modern p-6">
+            <div class="flex items-center justify-between mb-6">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 flex items-center justify-center">
+                  <UIcon name="i-lucide-folder-open" class="w-5 h-5 text-white" />
+                </div>
+                <h2 class="text-lg font-bold text-gray-900">Portfolio</h2>
+              </div>
+              <span class="text-sm text-gray-400">{{ user?.jobs?.length || 0 }} projects</span>
+            </div>
+
+            <div v-if="user?.jobs?.length > 0" class="grid md:grid-cols-2 gap-4">
+              <div
+                v-for="(job, i) in user?.jobs"
+                :key="i"
+                class="group p-4 rounded-xl border-2 border-gray-100 hover:border-violet-200 hover:bg-violet-50/50 transition-all cursor-pointer"
+              >
+                <div class="flex items-start gap-3">
+                  <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-100 to-blue-100 flex items-center justify-center flex-shrink-0">
+                    <UIcon name="i-lucide-briefcase" class="w-6 h-6 text-violet-600" />
+                  </div>
+                  <div>
+                    <h3 class="font-semibold text-gray-900 group-hover:text-violet-600 transition-colors">{{ job.title }}</h3>
+                    <p class="text-sm text-gray-500">Completed project</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div v-else class="text-center py-12">
+              <div class="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
+                <UIcon name="i-lucide-folder" class="w-8 h-8 text-gray-400" />
+              </div>
+              <p class="text-gray-500">No portfolio items yet</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column - Sidebar -->
+        <div class="space-y-6">
+          <!-- Skills Card -->
+          <div class="card-modern p-6">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-10 h-10 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 flex items-center justify-center">
+                <UIcon name="i-lucide-zap" class="w-5 h-5 text-white" />
+              </div>
+              <h2 class="text-lg font-bold text-gray-900">Skills</h2>
+            </div>
+
+            <div v-if="user?.userSkills?.length > 0" class="flex flex-wrap gap-2">
+              <span
+                v-for="(skill, i) in user?.userSkills"
+                :key="i"
+                class="px-4 py-2 rounded-xl bg-violet-50 text-violet-700 text-sm font-medium border border-violet-100"
+              >
+                {{ skill.name }}
+              </span>
+            </div>
+            <p v-else class="text-gray-500 text-sm">No skills added yet</p>
+          </div>
+
+          <!-- Contact Card -->
+          <div class="card-modern p-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">Quick Contact</h3>
+            <div class="space-y-3">
+              <div class="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+                <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <UIcon name="i-lucide-mail" class="w-5 h-5 text-blue-600" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs text-gray-400">Email</p>
+                  <p class="text-sm font-medium text-gray-700 truncate">{{ user?.email }}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+                <div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                  <UIcon name="i-lucide-clock" class="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <p class="text-xs text-gray-400">Response Time</p>
+                  <p class="text-sm font-medium text-gray-700">Within 24 hours</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </UCard>
-  </UContainer>
+    </UContainer>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -119,50 +193,12 @@ interface User {
   name: string | null;
   email: string | null;
   bio: string | null;
-  userSkills: Skill[];
+  image_url: string | null;
+  userSkills: { name: string }[];
   jobs: { job_id: number; title: string }[];
 }
-import type { Skill } from "@prisma/client";
-import { useRoute } from "vue-router";
 
 const route = useRoute();
-
-// const freelancer = ref({
-//   id: route.params.id,
-//   name: "Nur Izzah Binti Halim",
-//   title: "Frontend Developer & UI Designer",
-//   rating: "4.9",
-//   avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Izzah",
-//   about:
-//     "I’m a passionate front-end developer from UiTM with experience in building responsive web apps using Vue, Nuxt, and Tailwind. I love crafting clean UI and improving user experience.",
-//   skills: [
-//     "Nuxt.js",
-//     "Vue.js",
-//     "TailwindCSS",
-//     "Figma",
-//     "JavaScript",
-//     "UI/UX Design",
-//   ],
-//   portfolio: [
-//     {
-//       title: "SiswaConnect Landing Page",
-//       category: "Web Design",
-//       image:
-//         "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800",
-//     },
-//     {
-//       title: "Mobile Food App UI",
-//       category: "UI/UX Design",
-//       image: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800",
-//     },
-//     {
-//       title: "Freelancer Dashboard",
-//       category: "Frontend Development",
-//       image:
-//         "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800",
-//     },
-//   ],
-// });
 
 const { data } = useNuxtData(`user-${route.params.id}`);
 const {
@@ -178,12 +214,32 @@ const {
 
 const user = ref<User>(freelancer.value as User)
 
-const messageFreelancer = () => {
-  alert("Opening chat with freelancer...");
+const messageFreelancer = async () => {
+  try {
+    const myUserId = userStore().user?.user_id
+    if (!myUserId) {
+      alert('Please log in to send messages')
+      return
+    }
+
+    const conversation = await $fetch('/api/conversations', {
+      method: 'POST',
+      body: {
+        participant1_id: myUserId,
+        participant2_id: user.value?.user_id
+      }
+    })
+
+    if (conversation && (conversation as any).conversation_id) {
+      navigateTo(`/inbox?conversation=${(conversation as any).conversation_id}`)
+    }
+  } catch (error) {
+    console.error('Failed to start conversation:', error)
+  }
 };
 
 const hireFreelancer = () => {
-  alert("Redirecting to job offer page...");
+  navigateTo('/jobs/create')
 };
 
 const id = route.params.id;

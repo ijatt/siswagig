@@ -17,7 +17,8 @@ export default defineEventHandler(async (event) => {
         email: true,
         bio: true,
         location: true,
-        jobs: true
+        jobs: true,
+        image_url: true,
       },
     })
 

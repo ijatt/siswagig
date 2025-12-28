@@ -17,6 +17,21 @@ export default defineEventHandler(async (event) => {
   try {
     const body = await readBody<Application>(event)
 
+    // Check for duplicate application
+    const existingApplication = await prisma.application.findFirst({
+      where: {
+        job_id: body.job_id,
+        user_id: body.user_id
+      }
+    })
+
+    if (existingApplication) {
+      return createError({ 
+        statusCode: 409, 
+        statusMessage: "You have already applied to this job" 
+      })
+    }
+
     const application = await prisma.application.create({
       data: {
         job_id: body.job_id,

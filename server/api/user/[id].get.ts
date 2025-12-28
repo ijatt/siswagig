@@ -15,6 +15,7 @@ export default defineEventHandler(async (event) => {
         name: true,
         email: true,
         bio: true,
+        image_url: true,
         userSkills: {
           include: {
             skill: true,
@@ -38,6 +39,7 @@ export default defineEventHandler(async (event) => {
       name: user.name,
       email: user.email,
       bio: user.bio,
+      image_url: user.image_url,
       userSkills: user.userSkills.map((us) => ({
         id: us.skill.skill_id,
         name: us.skill.name,
