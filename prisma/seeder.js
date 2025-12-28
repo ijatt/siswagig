@@ -2,6 +2,275 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
+  // Add comprehensive freelancing industry skills
+  const skills = [
+    // Design Skills
+    "UI/UX Design",
+    "Graphic Design",
+    "Web Design",
+    "Logo Design",
+    "Branding",
+    "Figma",
+    "Adobe Photoshop",
+    "Adobe Illustrator",
+    "Adobe XD",
+    "Canva",
+    "Wireframing",
+    "Prototyping",
+    "Mobile App Design",
+    "Responsive Design",
+    "Typography",
+    "Color Theory",
+    "Icon Design",
+    "Illustration",
+    "3D Design",
+    "Animation Design",
+    
+    // Development - Frontend
+    "Front End Development",
+    "JavaScript",
+    "TypeScript",
+    "React",
+    "React Native",
+    "Vue.js",
+    "Nuxt",
+    "Angular",
+    "HTML/CSS",
+    "Tailwind CSS",
+    "Bootstrap",
+    "Next.js",
+    "Svelte",
+    "Web Development",
+    "Responsive Web Design",
+    "Progressive Web Apps",
+    "jQuery",
+    "SASS/SCSS",
+    "CSS Grid",
+    "Flexbox",
+    
+    // Development - Backend
+    "Backend Development",
+    "Node.js",
+    "Express.js",
+    "Laravel",
+    "PHP",
+    "Python",
+    "Django",
+    "Flask",
+    "Ruby on Rails",
+    "Java",
+    "Spring Boot",
+    "C#",
+    ".NET",
+    "Go",
+    "REST API",
+    "GraphQL",
+    "WebSockets",
+    "Real-Time Systems",
+    "Microservices",
+    
+    // Database
+    "Database Design",
+    "SQL",
+    "MySQL",
+    "PostgreSQL",
+    "MongoDB",
+    "Firebase",
+    "Redis",
+    "Oracle Database",
+    "Database Optimization",
+    "Data Modeling",
+    
+    // Mobile Development
+    "Mobile Development",
+    "iOS Development",
+    "Android Development",
+    "Flutter",
+    "Kotlin",
+    "Swift",
+    "Objective-C",
+    "Cross-Platform Development",
+    "App Store Optimization",
+    
+    // Video & Media
+    "Video Editing",
+    "Video Production",
+    "Adobe Premiere Pro",
+    "Final Cut Pro",
+    "CapCut",
+    "DaVinci Resolve",
+    "Motion Graphics",
+    "After Effects",
+    "Video Animation",
+    "Photography",
+    "Photo Editing",
+    "Lightroom",
+    "Photo Retouching",
+    "Portrait Photography",
+    "Product Photography",
+    "Video Shooting",
+    "Cinematography",
+    "Audio Editing",
+    "Sound Design",
+    
+    // Writing & Content
+    "Content Writing",
+    "Copywriting",
+    "SEO Writing",
+    "Blog Writing",
+    "Technical Writing",
+    "Editing",
+    "Proofreading",
+    "Translation",
+    "Content Strategy",
+    "Research",
+    "Creative Writing",
+    "Journalistic Writing",
+    "Grant Writing",
+    "Speech Writing",
+    
+    // Marketing & Social Media
+    "Social Media Marketing",
+    "Social Media Management",
+    "Content Planning",
+    "Instagram Marketing",
+    "Facebook Marketing",
+    "Twitter Marketing",
+    "LinkedIn Marketing",
+    "TikTok Marketing",
+    "Digital Marketing",
+    "Email Marketing",
+    "Marketing Strategy",
+    "Brand Management",
+    "Influencer Marketing",
+    "Community Management",
+    "Paid Advertising",
+    "Google Ads",
+    "Facebook Ads",
+    "Growth Hacking",
+    
+    // SEO & Analytics
+    "SEO",
+    "SEM",
+    "Google Analytics",
+    "Keyword Research",
+    "Link Building",
+    "Technical SEO",
+    "On-Page SEO",
+    "Off-Page SEO",
+    "Data Analytics",
+    "Business Analytics",
+    "Google Search Console",
+    
+    // E-Commerce
+    "E-Commerce Development",
+    "Shopify",
+    "WooCommerce",
+    "Magento",
+    "E-Commerce Design",
+    "Product Listing",
+    "Inventory Management",
+    
+    // CMS & Web Platforms
+    "WordPress",
+    "Drupal",
+    "Joomla",
+    "Wix",
+    "Squarespace",
+    "Webflow",
+    "Static Site Generators",
+    "Hugo",
+    
+    // Cloud & DevOps
+    "AWS",
+    "Google Cloud",
+    "Azure",
+    "Docker",
+    "Kubernetes",
+    "DevOps",
+    "CI/CD",
+    "GitHub",
+    "GitLab",
+    "Server Management",
+    "Linux",
+    "Cloud Architecture",
+    
+    // Data Science & AI
+    "Data Science",
+    "Machine Learning",
+    "AI",
+    "Python Data Science",
+    "R Programming",
+    "Pandas",
+    "NumPy",
+    "Scikit-learn",
+    "TensorFlow",
+    "Data Visualization",
+    "Statistical Analysis",
+    "Predictive Modeling",
+    
+    // Business & Strategy
+    "Business Strategy",
+    "Project Management",
+    "Agile",
+    "Scrum",
+    "Consulting",
+    "Business Analysis",
+    "Financial Modeling",
+    "Excel",
+    "Google Sheets",
+    "Data Visualization",
+    "Tableau",
+    "Power BI",
+    
+    // Other Technical Skills
+    "API Integration",
+    "System Architecture",
+    "Software Development",
+    "Code Review",
+    "QA Testing",
+    "Automation Testing",
+    "Manual Testing",
+    "Bug Tracking",
+    "Version Control",
+    "Git",
+    "Debugging",
+    "Performance Optimization",
+    "Security",
+    "Cybersecurity",
+    "Blockchain",
+    "Smart Contracts",
+    "Solidity",
+    
+    // Soft Skills & General
+    "Communication",
+    "Presentation",
+    "Project Coordination",
+    "Time Management",
+    "Problem Solving",
+    "Critical Thinking",
+    "Teamwork",
+    "Leadership",
+    "Customer Service",
+    "Negotiation",
+    "Research Skills",
+    "Documentation"
+  ];
+
+  try {
+    // Clear existing skills first
+    await prisma.skill.deleteMany({});
+    
+    // Insert all skills
+    await prisma.skill.createMany({
+      data: skills.map(name => ({ name }))
+    });
+    
+    console.log(`✓ ${skills.length} skills inserted successfully!`);
+  } catch (error) {
+    console.error("Error inserting skills:", error);
+  }
+
   // Example: Ensure at least 1 user exists
   const user_id = 3;
 
