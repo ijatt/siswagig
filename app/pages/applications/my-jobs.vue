@@ -304,7 +304,38 @@
                 <UIcon name="i-lucide-trophy" class="w-4 h-4" />
                 Project Completed!
               </span>
+
+              <!-- Portfolio Settings (for Completed status) -->
+              <button
+                v-if="app.status === 'Completed'"
+                @click="openPortfolioModal(app)"
+                class="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-100 text-purple-700 text-sm font-medium hover:bg-purple-200 transition-all"
+              >
+                <UIcon name="i-lucide-folder-open" class="w-4 h-4" />
+                Portfolio Settings
+              </button>
             </div>
+          </div>
+
+          <!-- Portfolio Status Banner (for Completed) -->
+          <div 
+            v-if="app.status === 'Completed'"
+            class="px-6 py-3 bg-purple-50 border-t border-purple-100 flex items-center justify-between"
+          >
+            <div class="flex items-center gap-2 text-sm">
+              <UIcon 
+                :name="app.portfolio_visible !== false ? 'i-lucide-eye' : 'i-lucide-eye-off'" 
+                :class="app.portfolio_visible !== false ? 'text-purple-600' : 'text-gray-400'"
+                class="w-4 h-4"
+              />
+              <span :class="app.portfolio_visible !== false ? 'text-purple-700' : 'text-gray-500'">
+                {{ app.portfolio_visible !== false ? 'Visible in Portfolio' : 'Hidden from Portfolio' }}
+              </span>
+            </div>
+            <span v-if="app.portfolio_reflection" class="text-xs text-purple-500 flex items-center gap-1">
+              <UIcon name="i-lucide-file-text" class="w-3.5 h-3.5" />
+              Has summary
+            </span>
           </div>
         </div>
       </div>
@@ -392,6 +423,145 @@
         </div>
       </Transition>
     </Teleport>
+
+    <!-- Portfolio Settings Modal -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div
+          v-if="showPortfolioModal"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        >
+          <!-- Backdrop -->
+          <div
+            class="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            @click="closePortfolioModal"
+          ></div>
+
+          <!-- Modal -->
+          <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-indigo-50">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                    <UIcon name="i-lucide-folder-open" class="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Portfolio Settings</h3>
+                    <p class="text-sm text-gray-500">Manage how this job appears in your portfolio</p>
+                  </div>
+                </div>
+                <button
+                  @click="closePortfolioModal"
+                  class="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <UIcon name="i-lucide-x" class="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
+            </div>
+
+            <!-- Content -->
+            <div class="p-6 space-y-6">
+              <!-- Job Preview -->
+              <div class="p-4 bg-gray-50 rounded-xl">
+                <p class="text-sm text-gray-500 mb-1">Project</p>
+                <p class="font-semibold text-gray-900">{{ portfolioApp?.job?.title }}</p>
+                <p class="text-sm text-gray-600 mt-1">
+                  Client: {{ portfolioApp?.job?.client?.name }}
+                </p>
+              </div>
+
+              <!-- Visibility Toggle -->
+              <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl">
+                <div class="flex items-center gap-3">
+                  <div :class="[
+                    'w-10 h-10 rounded-lg flex items-center justify-center transition-colors',
+                    portfolioVisible ? 'bg-purple-100' : 'bg-gray-100'
+                  ]">
+                    <UIcon 
+                      :name="portfolioVisible ? 'i-lucide-eye' : 'i-lucide-eye-off'" 
+                      :class="portfolioVisible ? 'text-purple-600' : 'text-gray-400'"
+                      class="w-5 h-5"
+                    />
+                  </div>
+                  <div>
+                    <p class="font-medium text-gray-900">Portfolio Visibility</p>
+                    <p class="text-sm text-gray-500">
+                      {{ portfolioVisible ? 'Visible to clients on your profile' : 'Hidden from your public profile' }}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  @click="portfolioVisible = !portfolioVisible"
+                  :class="[
+                    'relative w-12 h-6 rounded-full transition-colors',
+                    portfolioVisible ? 'bg-purple-600' : 'bg-gray-200'
+                  ]"
+                >
+                  <span
+                    :class="[
+                      'absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform',
+                      portfolioVisible ? 'translate-x-6' : 'translate-x-0'
+                    ]"
+                  ></span>
+                </button>
+              </div>
+
+              <!-- Reflection/Summary -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Project Summary
+                  <span class="text-gray-400 font-normal">(Optional)</span>
+                </label>
+                <textarea
+                  v-model="portfolioReflection"
+                  rows="4"
+                  placeholder="Describe what you accomplished, technologies used, challenges overcome, or skills demonstrated..."
+                  class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-300 focus:ring-2 focus:ring-purple-100 outline-none transition-all resize-none"
+                ></textarea>
+                <p class="text-xs text-gray-400 mt-1">
+                  This will be shown to clients viewing your portfolio
+                </p>
+              </div>
+
+              <!-- Tips -->
+              <div class="p-4 bg-purple-50 rounded-xl border border-purple-100">
+                <div class="flex items-start gap-3">
+                  <UIcon name="i-lucide-lightbulb" class="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+                  <div class="text-sm text-purple-700">
+                    <p class="font-medium mb-1">Portfolio Tips</p>
+                    <ul class="list-disc list-inside space-y-1 text-purple-600">
+                      <li>Highlight specific outcomes or results</li>
+                      <li>Mention key technologies or methods used</li>
+                      <li>Keep it concise but informative</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 flex items-center justify-end gap-3">
+              <button
+                @click="closePortfolioModal"
+                class="px-5 py-2.5 rounded-xl text-gray-700 font-medium hover:bg-gray-200 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                @click="savePortfolioSettings"
+                :disabled="savingPortfolio"
+                class="px-5 py-2.5 rounded-xl bg-purple-600 text-white font-semibold hover:bg-purple-700 transition-all disabled:opacity-50 flex items-center gap-2"
+              >
+                <UIcon v-if="savingPortfolio" name="i-lucide-loader-2" class="w-4 h-4 animate-spin" />
+                <UIcon v-else name="i-lucide-check" class="w-4 h-4" />
+                Save Settings
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -400,6 +570,13 @@ import { useDateFormat } from '@vueuse/core'
 
 definePageMeta({
   middleware: "auth",
+})
+
+useSeoMeta({
+  title: 'My Jobs | SiswaGig',
+  description: 'Manage and track your active freelance jobs. View job statuses, communicate with clients, and submit work for review on SiswaGig.',
+  ogTitle: 'My Jobs | SiswaGig',
+  ogDescription: 'Keep track of your active freelance jobs and their statuses on SiswaGig.'
 })
 
 const toast = useToast()
@@ -413,6 +590,13 @@ const showSubmitModal = ref(false)
 const selectedApp = ref<any>(null)
 const submitNote = ref('')
 const submitting = ref(false)
+
+// Portfolio state
+const showPortfolioModal = ref(false)
+const portfolioApp = ref<any>(null)
+const portfolioVisible = ref(true)
+const portfolioReflection = ref('')
+const savingPortfolio = ref(false)
 
 // Status configurations
 const statusConfig = (status: string) => {
@@ -583,6 +767,65 @@ const submitWork = async () => {
     })
   } finally {
     submitting.value = false
+  }
+}
+
+// Portfolio modal functions
+const openPortfolioModal = (app: any) => {
+  portfolioApp.value = app
+  portfolioVisible.value = app.portfolio_visible !== false
+  portfolioReflection.value = app.portfolio_reflection || ''
+  showPortfolioModal.value = true
+}
+
+const closePortfolioModal = () => {
+  showPortfolioModal.value = false
+  portfolioApp.value = null
+  portfolioVisible.value = true
+  portfolioReflection.value = ''
+}
+
+const savePortfolioSettings = async () => {
+  if (!portfolioApp.value) return
+  
+  savingPortfolio.value = true
+  try {
+    await $fetch(`/api/applications/${portfolioApp.value.application_id}/portfolio`, {
+      method: 'PATCH',
+      headers: {
+        authorization: `Bearer ${useMyTokenStore().accessToken}`
+      },
+      body: {
+        portfolio_visible: portfolioVisible.value,
+        portfolio_reflection: portfolioReflection.value.trim() || null
+      }
+    })
+    
+    // Update local state
+    const appIndex = jobs.value.findIndex(j => j.application_id === portfolioApp.value.application_id)
+    if (appIndex !== -1) {
+      jobs.value[appIndex].portfolio_visible = portfolioVisible.value
+      jobs.value[appIndex].portfolio_reflection = portfolioReflection.value.trim() || null
+    }
+    
+    closePortfolioModal()
+    
+    toast.add({
+      title: 'Portfolio Updated',
+      description: portfolioVisible.value 
+        ? 'This project is now visible in your portfolio' 
+        : 'This project is now hidden from your portfolio',
+      color: 'success'
+    })
+  } catch (err) {
+    console.error('Failed to save portfolio settings:', err)
+    toast.add({
+      title: 'Error',
+      description: 'Failed to update portfolio settings',
+      color: 'error'
+    })
+  } finally {
+    savingPortfolio.value = false
   }
 }
 
