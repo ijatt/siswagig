@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-violet-50/50 to-white">
+  <div class="min-h-screen bg-gradient-to-b">
     <!-- Hero Header -->
     <div class="bg-gradient-to-br from-violet-100 via-white to-blue-50 pattern-dots py-12">
       <UContainer class="max-w-5xl">
