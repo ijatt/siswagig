@@ -14,6 +14,13 @@ interface TypingData {
   conversation_id: number
 }
 
+// Store socket server globally for use in other parts of the app
+let globalSocketServer: SocketIOServer | null = null
+
+export function getSocketServer() {
+  return globalSocketServer
+}
+
 export default defineNitroPlugin((nitroApp) => {
   let socketServer: SocketIOServer | null = null
 
@@ -29,6 +36,9 @@ export default defineNitroPlugin((nitroApp) => {
       transports: ['websocket', 'polling']
     })
 
+    // Store globally
+    globalSocketServer = socketServer
+
     socketServer.on('error', (err: any) => {
       console.error('Socket.IO error:', err)
       if (err.code === 'EADDRINUSE') {
@@ -42,6 +52,17 @@ export default defineNitroPlugin((nitroApp) => {
 
     socketServer.on('connection', (socket) => {
       console.log('User connected:', socket.id)
+
+      // Join user's personal room for notifications
+      socket.on('join_user_room', (data: { user_id: number }) => {
+        socket.join(`user_${data.user_id}`)
+        console.log(`User ${data.user_id} joined their notification room`)
+      })
+
+      socket.on('leave_user_room', (data: { user_id: number }) => {
+        socket.leave(`user_${data.user_id}`)
+        console.log(`User ${data.user_id} left their notification room`)
+      })
 
       socket.on('join_conversation', (data: { conversation_id: number; user_id: number }) => {
         socket.join(`conversation_${data.conversation_id}`)
@@ -78,6 +99,35 @@ export default defineNitroPlugin((nitroApp) => {
             where: { conversation_id: message.conversation_id },
             data: { updated_at: new Date() }
           })
+
+          // Get conversation participants to send notification
+          const conversation = await prisma.conversation.findUnique({
+            where: { conversation_id: message.conversation_id },
+            select: { participant1_id: true, participant2_id: true }
+          })
+
+          if (conversation) {
+            // Determine recipient (the other participant)
+            const recipientId = conversation.participant1_id === message.sender_id 
+              ? conversation.participant2_id 
+              : conversation.participant1_id
+
+            if (recipientId) {
+              // Create notification for recipient
+              const notification = await prisma.notification.create({
+                data: {
+                  user_id: recipientId,
+                  type: 'message',
+                  title: 'New Message',
+                  message: `${savedMessage.sender.name} sent you a message`,
+                  link: `/inbox?conversationId=${message.conversation_id}`
+                }
+              })
+
+              // Emit notification to recipient's room
+              socketServer?.to(`user_${recipientId}`).emit('new-notification', notification)
+            }
+          }
 
           // Emit to conversation room
           socketServer?.to(`conversation_${message.conversation_id}`).emit('new_message', savedMessage)
