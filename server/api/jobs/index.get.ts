@@ -3,7 +3,16 @@ import { PrismaClient } from "@prisma/client"
 export default defineEventHandler(async (event) => {
   const prisma = new PrismaClient()
   try {
-    const jobs = await prisma.job.findMany();
+    const jobs = await prisma.job.findMany({
+      where: {
+        status: {
+          notIn: ['Completed', 'Closed']
+        }
+      },
+      orderBy: {
+        created_at: 'desc'
+      }
+    });
 
     if (!jobs) return createError({
       statusCode: 404,

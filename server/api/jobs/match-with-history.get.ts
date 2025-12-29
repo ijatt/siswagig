@@ -54,6 +54,9 @@ export default defineEventHandler(async (event) => {
     // Get all available jobs (without status filter - let all jobs be considered)
     const jobs = await prisma.job.findMany({
       where: {
+        status: {
+          notIn: ['Completed', 'Closed']
+        },
         NOT: {
           user_id: userId as number
         }
