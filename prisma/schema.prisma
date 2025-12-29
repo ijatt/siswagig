@@ -87,8 +87,13 @@ model Application {
   estimated_completion DateTime
   status               String
   created_at           DateTime @default(now())
+  completed_at         DateTime?
   job_id               Int
   user_id              Int
+
+  // Portfolio fields
+  portfolio_visible    Boolean  @default(true)
+  portfolio_reflection String?
 
   // Relationships
   job  Job  @relation(fields: [job_id], references: [job_id])
