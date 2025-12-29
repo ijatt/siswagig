@@ -3,13 +3,20 @@ import { ref } from 'vue'
 
 let socket: Socket | null = null
 
-export const useSocket = () => {
-  const isConnected = ref(false)
-  const messages = ref<any[]>([])
-  const typingUsers = ref<Set<number>>(new Set())
+// Shared state - must be outside the composable function to be shared across components
+const isConnected = ref(false)
+const messages = ref<any[]>([])
+const typingUsers = ref<Set<number>>(new Set())
+let isInitialized = false
 
+export const useSocket = () => {
   const initSocket = () => {
     if (socket && socket.connected) {
+      return socket
+    }
+
+    // Prevent duplicate event listeners
+    if (isInitialized && socket) {
       return socket
     }
 
@@ -54,7 +61,22 @@ export const useSocket = () => {
       console.error('Socket error:', error)
     })
 
+    isInitialized = true
     return socket
+  }
+
+  // Join user's personal room for notifications
+  const joinUserRoom = (userId: number) => {
+    if (socket && socket.connected) {
+      socket.emit('join_user_room', { user_id: userId })
+      console.log('Joined user room for notifications:', userId)
+    }
+  }
+
+  const leaveUserRoom = (userId: number) => {
+    if (socket && socket.connected) {
+      socket.emit('leave_user_room', { user_id: userId })
+    }
   }
 
   const sendMessage = async (conversationId: number, content: string) => {
@@ -129,17 +151,24 @@ export const useSocket = () => {
       socket.disconnect()
       socket = null
       isConnected.value = false
+      isInitialized = false
     }
   }
+
+  // Get the raw socket instance for direct event handling
+  const getSocket = () => socket
 
   return {
     isConnected,
     messages,
     typingUsers,
     initSocket,
+    getSocket,
     sendMessage,
     joinConversation,
     leaveConversation,
+    joinUserRoom,
+    leaveUserRoom,
     startTyping,
     stopTyping,
     disconnect

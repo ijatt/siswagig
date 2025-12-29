@@ -14,6 +14,9 @@
           
           <!-- Right Actions -->
           <div class="flex items-center gap-3">
+            <!-- Notification Bell -->
+            <NotificationBell v-if="userStore().user != null" />
+            
             <UColorModeButton class="hover-lift" />
             <UDropdownMenu
               v-if="userStore().user != null"
@@ -39,10 +42,21 @@
       <UContainer class="py-4">
         <button 
           @click="goBack" 
-          class="group flex items-center gap-2 px-4 py-2 rounded-xl text-gray-600 hover:text-purple-700 hover:bg-purple-50 transition-all duration-200"
+          class="group relative flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white border border-gray-200 text-gray-600 shadow-sm hover:shadow-md hover:border-purple-300 hover:text-purple-700 transition-all duration-300 overflow-hidden"
         >
-          <Icon size="18" name="line-md-arrow-left" class="group-hover:-translate-x-1 transition-transform" /> 
-          <span class="font-medium">Back</span>
+          <!-- Hover gradient background -->
+          <div class="absolute inset-0 bg-gradient-to-r from-purple-50 to-blue-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          
+          <!-- Icon with animation -->
+          <div class="relative w-7 h-7 rounded-lg bg-gray-100 group-hover:bg-purple-100 flex items-center justify-center transition-all duration-300">
+            <Icon size="16" name="i-lucide-arrow-left" class="text-gray-500 group-hover:text-purple-600 group-hover:-translate-x-0.5 transition-all duration-300" />
+          </div>
+          
+          <!-- Text -->
+          <span class="relative font-medium text-sm">Go Back</span>
+          
+          <!-- Decorative dot -->
+          <div class="relative w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-purple-400 transition-colors duration-300"></div>
         </button>
       </UContainer>
     </div>
@@ -79,7 +93,7 @@ const router = useRouter();
 const bgClass = computed(() => {
   const path = route.path;
   const whiteBgPaths = ['/', '/explore', '/auth'];
-  return whiteBgPaths.includes(path) ? 'bg-white' : 'bg-purple-50';
+  return whiteBgPaths.includes(path) ? 'bg-white' : 'bg-white';
 });
 
 // Show back button on all pages except /explore, /auth, and /
@@ -111,13 +125,20 @@ const freelancer = computed(() => [
         await navigateTo(`/freelancer/${userStore().user?.user_id}`)
       },
     },
+    {
+      label: 'Explore',
+      icon: 'i-lucide-compass',
+      async onSelect() {
+        await navigateTo('/explore')
+      },
+    }
   ],
   [
     {
       label: 'Jobs',
       icon: 'basil-bag-solid',
       async onSelect() {
-        await navigateTo('/explore')
+        await navigateTo('/applications/my-jobs')
       }
     },
     {
