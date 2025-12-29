@@ -187,6 +187,13 @@ definePageMeta({
   middleware: 'auth'
 })
 
+useSeoMeta({
+  title: 'Complete Your Profile | SiswaGig',
+  description: 'Finish setting up your SiswaGig profile to start finding freelance opportunities or attracting clients. Add your bio, skills, and location.',
+  ogTitle: 'Complete Your Profile | SiswaGig',
+  ogDescription: 'Get started on SiswaGig by completing your profile with key information.'
+})
+
 const router = useRouter()
 const user = userStore()
 

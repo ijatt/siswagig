@@ -219,6 +219,13 @@
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useSocket } from '~/composables/socket'
 
+useSeoMeta({
+  title: 'Inbox | SiswaGig',
+  description: 'Manage your conversations and chat with other UiTM students on SiswaGig. Stay connected and collaborate on projects easily.',
+  ogTitle: 'Inbox | SiswaGig',
+  ogDescription: 'Chat and manage your conversations with UiTM student freelancers on SiswaGig.'
+})
+
 const currentUserId = ref<number>(0)
 const conversations = ref<any[]>([])
 const activeChat = ref<any>(null)

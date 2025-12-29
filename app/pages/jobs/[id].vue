@@ -213,6 +213,13 @@
 import type { Job } from '~/types/types'
 import { calculateDistance, type Coordinate } from '~~/server/utils/geolocation'
 
+useSeoMeta({
+  title: 'Job Details | SiswaGig',
+  description: 'View detailed information about the job, including description, requirements, and how to apply. Connect with UiTM student freelancers for your projects.',
+  ogTitle: 'Job Details | SiswaGig',
+  ogDescription: 'Explore job details and apply for freelance opportunities on SiswaGig.'
+})
+
 const route = useRoute();
 const toast = useToast();
 

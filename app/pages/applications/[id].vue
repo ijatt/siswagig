@@ -250,6 +250,13 @@
 <script lang="ts" setup>
 import type { Application } from "~/types/types";
 
+useSeoMeta({
+  title: 'Application Details | SiswaGig',
+  description: 'View detailed information about a specific job application, including applicant profile, cover letter, skills, and work history. Manage application status and communicate with applicants on SiswaGig.',
+  ogTitle: 'Application Details | SiswaGig',
+  ogDescription: 'Review and manage job applications from UiTM student freelancers on SiswaGig.'
+});
+
 const route = useRoute();
 const id = route.params.id as string;
 

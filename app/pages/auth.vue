@@ -36,6 +36,14 @@
 definePageMeta({
   middleware: "guest"
 })
+
+useSeoMeta({
+  title: 'Login or Sign Up | SiswaGig',
+  description: 'Access your SiswaGig account or create a new one to find freelance opportunities or hire talented UiTM students.',
+  ogTitle: 'Login or Sign Up | SiswaGig',
+  ogDescription: 'Join SiswaGig to connect with UiTM student freelancers and clients.'
+})
+
 import * as z from 'zod';
 import type { FormSubmitEvent, AuthFormField } from '@nuxt/ui';
 

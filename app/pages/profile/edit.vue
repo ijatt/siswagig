@@ -419,6 +419,13 @@ definePageMeta({
   middleware: "auth",
 });
 
+useSeoMeta({
+  title: 'Edit Profile | SiswaGig',
+  description: 'Update your profile information, including photo, bio, skills, and account settings on SiswaGig.',
+  ogTitle: 'Edit Profile | SiswaGig',
+  ogDescription: 'Keep your SiswaGig profile up to date to attract more clients and opportunities.'
+})
+
 const navigate = useRouter()
 const form = ref<any>({ skills: [] })
 const activeSection = ref('photo')

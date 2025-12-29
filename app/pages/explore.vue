@@ -3,6 +3,13 @@ definePageMeta({
   middleware: "auth",
 });
 
+useSeoMeta({
+  title: 'Explore Opportunities | SiswaGig',
+  description: 'Find freelance jobs matched to your skills or discover talented UiTM students ready to work on your projects.',
+  ogTitle: 'Explore Opportunities | SiswaGig',
+  ogDescription: 'Discover freelance jobs and talented UiTM student freelancers on SiswaGig.'
+});
+
 import type { Job } from "~/types/types";
 
 const route = useRoute();

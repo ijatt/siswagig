@@ -6,6 +6,13 @@ definePageMeta({
   middleware: "auth",
 });
 
+useSeoMeta({
+  title: 'Create a Job | SiswaGig',
+  description: 'Post a new freelance job and connect with talented UiTM student freelancers. Fill in job details, location, budget, and requirements to get started.',
+  ogTitle: 'Create a Job | SiswaGig',
+  ogDescription: 'Easily create and post freelance job opportunities for UiTM students on SiswaGig.'
+})
+
 interface JobCreate {
   title: string;
   description: string;

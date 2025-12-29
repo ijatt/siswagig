@@ -4,6 +4,13 @@ definePageMeta({
   middleware: "auth",
 });
 
+useSeoMeta({
+  title: 'Job Applications | SiswaGig',
+  description: 'Manage and track all your job applications in one place. View application statuses, communicate with clients, and stay updated on your freelance opportunities.',
+  ogTitle: 'Job Applications | SiswaGig',
+  ogDescription: 'Keep track of your job applications and their statuses on SiswaGig.'
+})
+
 // State
 const jobs = ref<any[]>([])
 const loading = ref(true)

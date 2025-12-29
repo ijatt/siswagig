@@ -5,6 +5,13 @@ definePageMeta({
   middleware: "auth",
 });
 
+useSeoMeta({
+  title: 'My Applications | SiswaGig',
+  description: 'Track and manage all your job applications in one place. View application statuses, communicate with clients, and stay updated on your freelance opportunities.',
+  ogTitle: 'My Applications | SiswaGig',
+  ogDescription: 'Keep track of your job applications and their statuses on SiswaGig.'
+})
+
 const route = useRoute()
 const id = userStore().user?.user_id
 const isLoading = ref(true)

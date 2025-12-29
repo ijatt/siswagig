@@ -190,6 +190,13 @@
 definePageMeta({
   middleware: "guest"
 })
+useSeoMeta({
+  title: 'SiswaGig - Freelance Platform for UiTM Students',
+  description: 'Connect, collaborate, and succeed with SiswaGig - the freelance marketplace built by UiTM for UiTM students. Turn your skills into income while studying.',
+  ogTitle: 'SiswaGig - Freelance Platform for UiTM Students',
+  ogDescription: 'The freelance marketplace built by UiTM for UiTM students. Find gigs, hire talent, and grow your career.',
+  ogType: 'website'
+})
 const features = ref([
   {
     title: 'Smart Job Matching',
