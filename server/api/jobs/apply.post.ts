@@ -1,4 +1,6 @@
 import { PrismaClient } from "@prisma/client"
+import { createApplicationNotification } from '~~/server/utils/notifications'
+
 interface Application {
   id: string;
   job_id: number;
@@ -40,10 +42,36 @@ export default defineEventHandler(async (event) => {
         status: "Pending",
         price_offered: body.price,
         estimated_completion: new Date(body.duration),
+      },
+      include: {
+        user: {
+          select: {
+            name: true
+          }
+        },
+        job: {
+          include: {
+            user: {
+              select: {
+                user_id: true
+              }
+            }
+          }
+        }
       }
     })
 
     if (!application) return createError({  statusCode: 500, statusMessage: "Error creating application." })
+
+    // Create notification for the client (job owner)
+    await createApplicationNotification(
+      application.job.user.user_id,
+      application.user.name,
+      application.job.title,
+      application.job.job_id,
+      application.application_id
+    )
+
     return application
 
   } catch (error) {
