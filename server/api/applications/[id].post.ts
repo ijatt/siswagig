@@ -24,7 +24,9 @@ export default defineEventHandler(async (event) => {
     const updated = await prisma.application.update({
       where: { application_id },
       data: {
-        status: body.status as any
+        status: body.status as any,
+        // Set completed_at timestamp when status becomes Completed
+        ...(body.status === 'Completed' ? { completed_at: new Date() } : {})
       },
       include: {
         user: {
