@@ -28,6 +28,11 @@ model User {
   skill_id         Int?
   image_url        String?
   profile_completed Boolean  @default(false)
+  
+  // Payment/Bank info for freelancers
+  bank_name        String?
+  bank_account_no  String?
+  bank_account_holder String?
 
   // Relationships
   skill        Skill?        @relation(fields: [skill_id], references: [skill_id])
@@ -38,6 +43,11 @@ model User {
   reviewsTo    Review[]      @relation("ReviewsToUser")
   sentMessages Message[]
   notifications Notification[]
+  
+  // Payment relationships
+  stripeAccount      StripeAccount?  // Freelancer's connected Stripe account
+  clientPayments     Payment[]       @relation("ClientPayments")
+  freelancerPayments Payment[]       @relation("FreelancerReceivedPayments")
 }
 
 model Skill {
@@ -96,8 +106,9 @@ model Application {
   portfolio_reflection String?
 
   // Relationships
-  job  Job  @relation(fields: [job_id], references: [job_id])
-  user User @relation(fields: [user_id], references: [user_id])
+  job     Job      @relation(fields: [job_id], references: [job_id])
+  user    User     @relation(fields: [user_id], references: [user_id])
+  payment Payment? // One-to-one payment relation
 }
 
 model Review {
@@ -171,4 +182,85 @@ model Notification {
 
   @@index([user_id, is_read])
   @@index([user_id, created_at])
+}
+
+// ==================== PAYMENT SYSTEM ====================
+
+// Stripe Connect account for freelancers
+model StripeAccount {
+  stripe_account_id   Int      @id @default(autoincrement())
+  user_id             Int      @unique
+  stripe_account_code String   @unique // Stripe Connect Account ID (acct_xxx)
+  account_status      String   @default("pending") // pending, active, restricted, disabled
+  charges_enabled     Boolean  @default(false)
+  payouts_enabled     Boolean  @default(false)
+  onboarding_complete Boolean  @default(false)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+
+  // Relationships
+  user     User      @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  payments Payment[] @relation("FreelancerPayments")
+
+  @@index([user_id])
+  @@index([stripe_account_code])
+}
+
+// Payment records for escrow-style transactions
+model Payment {
+  payment_id              Int       @id @default(autoincrement())
+  application_id          Int       @unique // One payment per application
+  client_id               Int       // The client making the payment
+  freelancer_id           Int       // The freelancer receiving the payment
+  freelancer_stripe_id    Int?      // Reference to StripeAccount
+  
+  // Amounts
+  amount                  Float     // Total amount in cents
+  platform_fee            Float     @default(0) // Platform fee amount in cents
+  freelancer_amount       Float     // Amount to be paid to freelancer (amount - platform_fee)
+  currency                String    @default("usd")
+  
+  // Stripe IDs
+  stripe_payment_intent_id String?  @unique // pi_xxx
+  stripe_charge_id         String?  // ch_xxx
+  stripe_transfer_id       String?  // tr_xxx (for payout to freelancer)
+  
+  // Status tracking
+  status                  String    @default("pending") // pending, paid, released, refunded, failed
+  paid_at                 DateTime? // When client paid
+  released_at             DateTime? // When payment was released to freelancer
+  refunded_at             DateTime? // When payment was refunded (if applicable)
+  
+  // Metadata
+  description             String?
+  failure_reason          String?
+  created_at              DateTime  @default(now())
+  updated_at              DateTime  @updatedAt
+
+  // Relationships
+  application        Application   @relation(fields: [application_id], references: [application_id], onDelete: Cascade)
+  client             User          @relation("ClientPayments", fields: [client_id], references: [user_id])
+  freelancer         User          @relation("FreelancerReceivedPayments", fields: [freelancer_id], references: [user_id])
+  freelancerStripe   StripeAccount? @relation("FreelancerPayments", fields: [freelancer_stripe_id], references: [stripe_account_id])
+
+  @@index([application_id])
+  @@index([client_id])
+  @@index([freelancer_id])
+  @@index([status])
+  @@index([stripe_payment_intent_id])
+}
+
+// Transaction log for auditing
+model PaymentTransaction {
+  transaction_id   Int      @id @default(autoincrement())
+  payment_id       Int
+  type             String   // payment_created, payment_succeeded, payment_failed, transfer_created, transfer_completed, refund_initiated, refund_completed
+  stripe_event_id  String?  // Stripe webhook event ID
+  amount           Float?
+  status           String
+  metadata         String?  // JSON string for additional data
+  created_at       DateTime @default(now())
+
+  @@index([payment_id])
+  @@index([stripe_event_id])
 }

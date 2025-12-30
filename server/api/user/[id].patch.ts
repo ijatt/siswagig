@@ -6,7 +6,16 @@ export default defineEventHandler(async (event) => {
     const { id } = event.context.params as { id: string }
     const userId = Number(id)
 
-    const body = await readBody<{ name?: string; bio?: string; location?: string; image_url?: string; skills?: number[] }>(event)
+    const body = await readBody<{ 
+      name?: string
+      bio?: string
+      location?: string
+      image_url?: string
+      skills?: number[]
+      bank_name?: string | null
+      bank_account_no?: string | null
+      bank_account_holder?: string | null
+    }>(event)
 
     if (!body) return createError({ statusCode: 400, statusMessage: 'No data provided' })
 
@@ -15,6 +24,9 @@ export default defineEventHandler(async (event) => {
     if (body.bio !== undefined) updateData.bio = body.bio
     if (body.location !== undefined) updateData.location = body.location
     if (body.image_url !== undefined) updateData.image_url = body.image_url
+    if (body.bank_name !== undefined) updateData.bank_name = body.bank_name
+    if (body.bank_account_no !== undefined) updateData.bank_account_no = body.bank_account_no
+    if (body.bank_account_holder !== undefined) updateData.bank_account_holder = body.bank_account_holder
 
     // Update user
     const user = await prisma.user.update({

@@ -82,7 +82,7 @@ async function loadJobs() {
     const data = await $fetch('/api/jobs', {
       method: 'GET',
     });
-    jobs.value = (data as Job[]) || [];
+    jobs.value = (data as unknown as Job[]) || [];
   } catch (err: any) {
     console.error('Failed to load jobs:', err);
     jobsError.value = err?.message || 'Failed to load jobs';
@@ -100,7 +100,7 @@ onMounted(async () => {
       return;
     }
 
-    user.value = await $fetch("/api/user", {
+    user.value = await $fetch<User>("/api/user", {
       method: "GET",
       headers: {
         authorization: `Bearer ${tokenStore.accessToken}`,

@@ -308,6 +308,84 @@
             </div>
           </div>
 
+          <!-- Payment Info Section (Freelancers Only) -->
+          <div 
+            v-if="isFreelancer"
+            v-show="activeSection === 'payment'"
+            class="bg-white rounded-2xl border border-gray-100 overflow-hidden"
+          >
+            <div class="px-6 py-4 border-b border-gray-100">
+              <h2 class="font-semibold text-gray-900">Payment Information</h2>
+              <p class="text-sm text-gray-500">Add your bank details to receive payments for completed jobs</p>
+            </div>
+            <div class="p-6 space-y-5">
+              <!-- Bank Name -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Bank Name
+                </label>
+                <div class="relative">
+                  <UIcon name="i-lucide-building-2" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input 
+                    v-model="form.bank_name"
+                    type="text"
+                    placeholder="e.g., Maybank, CIMB, Public Bank"
+                    class="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-purple-300 focus:ring-2 focus:ring-purple-100 outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              <!-- Account Number -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Account Number
+                </label>
+                <div class="relative">
+                  <UIcon name="i-lucide-hash" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input 
+                    v-model="form.bank_account_no"
+                    type="text"
+                    placeholder="Enter your bank account number"
+                    class="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-purple-300 focus:ring-2 focus:ring-purple-100 outline-none transition-all"
+                  />
+                </div>
+                <p class="text-xs text-gray-400 mt-1.5">Your account number is kept secure and only shown to you</p>
+              </div>
+
+              <!-- Account Holder Name -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Account Holder Name
+                </label>
+                <div class="relative">
+                  <UIcon name="i-lucide-user-check" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input 
+                    v-model="form.bank_account_holder"
+                    type="text"
+                    placeholder="Name as it appears on your bank account"
+                    class="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-purple-300 focus:ring-2 focus:ring-purple-100 outline-none transition-all"
+                  />
+                </div>
+                <p class="text-xs text-gray-400 mt-1.5">Must match the name on your bank account exactly</p>
+              </div>
+
+              <!-- Info Note -->
+              <div class="p-4 rounded-xl bg-blue-50 border border-blue-100">
+                <div class="flex gap-3">
+                  <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <UIcon name="i-lucide-info" class="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <p class="text-sm text-blue-800 font-medium">Secure Payment</p>
+                    <p class="text-xs text-blue-600 mt-1">
+                      Your bank details are encrypted and securely stored. Payments will be transferred to this account when clients release funds for completed jobs.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Account Section -->
           <div 
             v-show="activeSection === 'account'"
@@ -412,7 +490,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import type { User } from '~/types/types'
 
 definePageMeta({
@@ -430,14 +508,25 @@ const navigate = useRouter()
 const form = ref<any>({ skills: [] })
 const activeSection = ref('photo')
 
-// Sections configuration
-const sections = [
-  { key: 'photo', label: 'Profile Photo', icon: 'i-lucide-camera' },
-  { key: 'basic', label: 'Basic Info', icon: 'i-lucide-user' },
-  { key: 'location', label: 'Location', icon: 'i-lucide-map-pin' },
-  { key: 'skills', label: 'Skills', icon: 'i-lucide-sparkles' },
-  { key: 'account', label: 'Account', icon: 'i-lucide-settings' },
-]
+// Check if user is freelancer
+const isFreelancer = computed(() => userStore().user?.role === 'freelancer')
+
+// Sections configuration - payment info only for freelancers
+const sections = computed(() => {
+  const baseSections = [
+    { key: 'photo', label: 'Profile Photo', icon: 'i-lucide-camera' },
+    { key: 'basic', label: 'Basic Info', icon: 'i-lucide-user' },
+    { key: 'location', label: 'Location', icon: 'i-lucide-map-pin' },
+    { key: 'skills', label: 'Skills', icon: 'i-lucide-sparkles' },
+  ]
+  
+  if (isFreelancer.value) {
+    baseSections.push({ key: 'payment', label: 'Payment Info', icon: 'i-lucide-credit-card' })
+  }
+  
+  baseSections.push({ key: 'account', label: 'Account', icon: 'i-lucide-settings' })
+  return baseSections
+})
 
 const availableSkills = ref<any[]>([])
 const loadingSkills = ref(false)
@@ -470,7 +559,8 @@ const removeSkill = (skillId: number) => {
 async function loadSkills() {
   try {
     loadingSkills.value = true
-    availableSkills.value = await $fetch('/api/skills')
+    const skills = await $fetch<any[]>('/api/skills')
+    availableSkills.value = skills
   } catch (err) {
     errorMessage.value = 'Unable to load skills.'
   } finally {
@@ -494,7 +584,10 @@ async function loadUser() {
       bio: u.bio || '',
       location: u.location || '',
       image_url: u.image_url || '',
-      skills: u.userSkills ? (u.userSkills as any[]).map((s) => s.skill_id) : []
+      skills: u.userSkills ? (u.userSkills as any[]).map((s) => s.skill_id) : [],
+      bank_name: u.bank_name || '',
+      bank_account_no: u.bank_account_no || '',
+      bank_account_holder: u.bank_account_holder || ''
     }
   } catch (err) {
     errorMessage.value = 'Unable to load profile. Make sure you are signed in.'
@@ -522,15 +615,24 @@ async function onSave() {
   }
 
   try {
+    const payload: any = {
+      name: form.value.name,
+      bio: form.value.bio,
+      location: form.value.location,
+      image_url: form.value.image_url,
+      skills: form.value.skills.map((s: any) => s.skill_id || s)
+    }
+
+    // Include bank info for freelancers
+    if (isFreelancer.value) {
+      payload.bank_name = form.value.bank_name || null
+      payload.bank_account_no = form.value.bank_account_no || null
+      payload.bank_account_holder = form.value.bank_account_holder || null
+    }
+
     await $fetch(`/api/user/${form.value.user_id}`, {
       method: 'PATCH',
-      body: {
-        name: form.value.name,
-        bio: form.value.bio,
-        location: form.value.location,
-        image_url: form.value.image_url,
-        skills: form.value.skills.map((s: any) => s.skill_id)
-      }
+      body: payload
     })
     successMessage.value = 'Profile saved successfully.'
   } catch (err) {

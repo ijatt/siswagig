@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import { createStatusNotification, createWorkSubmittedNotification } from '~~/server/utils/notifications'
+import { PaymentStatus } from '~~/server/utils/stripe'
 
 export default defineEventHandler(async (event) => {
   const prisma = new PrismaClient()
@@ -125,6 +126,47 @@ export default defineEventHandler(async (event) => {
         where: { job_id: updated.job_id },
         data: { status: 'Completed' }
       })
+
+      // Auto-create payment record if not exists
+      const existingPayment = await prisma.payment.findUnique({
+        where: { application_id }
+      })
+
+      if (!existingPayment) {
+        // Calculate amounts
+        const feePercent = 10 // 10% platform fee
+        const amount = updated.price_offered
+        const amountCents = Math.round(amount * 100)
+        const platformFeeCents = Math.round(amountCents * feePercent / 100)
+        const freelancerAmountCents = amountCents - platformFeeCents
+
+        await prisma.payment.create({
+          data: {
+            application_id: application_id,
+            client_id: clientId,
+            freelancer_id: freelancerId,
+            amount: amountCents,
+            platform_fee: platformFeeCents,
+            freelancer_amount: freelancerAmountCents,
+            currency: 'myr',
+            status: PaymentStatus.PENDING,
+            description: `Payment for job: ${jobTitle}`
+          }
+        })
+
+        // Notify client about pending payment
+        await prisma.notification.create({
+          data: {
+            user_id: clientId,
+            type: 'payment',
+            title: 'Payment Required 💳',
+            message: `Please complete the payment of RM${amount.toFixed(2)} for "${jobTitle}" to release funds to the freelancer.`,
+            link: `/payments`,
+            related_job_id: updated.job_id,
+            related_application_id: application_id
+          }
+        })
+      }
     }
 
     if (body.status === 'Revision') {

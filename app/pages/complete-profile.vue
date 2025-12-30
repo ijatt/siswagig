@@ -109,10 +109,60 @@
           </div>
         </div>
 
-        <!-- Step 4: Review -->
-        <div v-if="currentStep === 3" class="space-y-4">
+        <!-- Step 4: Payment Info (Freelancers only) -->
+        <div v-if="currentStep === paymentStepIndex && isFreelancer" class="space-y-4">
           <div>
-            <h2 class="text-2xl font-semibold mb-2">{{ steps[3] }}</h2>
+            <h2 class="text-2xl font-semibold mb-2">{{ steps[paymentStepIndex] }}</h2>
+            <p class="text-gray-500 mb-4">
+              Add your bank account details to receive payments
+            </p>
+          </div>
+          
+          <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+            <div class="flex items-start gap-3">
+              <UIcon name="i-lucide-shield-check" class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div class="text-sm">
+                <p class="font-medium text-blue-800">Your information is secure</p>
+                <p class="text-blue-700 mt-1">Bank details are only used to process your payments and are kept confidential.</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Bank Name</label>
+            <UInput
+              v-model="form.bank_name"
+              placeholder="e.g., Maybank, CIMB, Public Bank"
+              class="w-full"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Account Number</label>
+            <UInput
+              v-model="form.bank_account_no"
+              placeholder="Enter your bank account number"
+              class="w-full"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Account Holder Name</label>
+            <UInput
+              v-model="form.bank_account_holder"
+              placeholder="Name as it appears on your bank account"
+              class="w-full"
+            />
+          </div>
+          
+          <p class="text-xs text-gray-500 mt-2">
+            <UIcon name="i-lucide-info" class="w-3 h-3 inline mr-1" />
+            You can skip this step and add payment info later in your profile settings.
+          </p>
+        </div>
+
+        <!-- Step 4/5: Review -->
+        <div v-if="currentStep === reviewStepIndex" class="space-y-4">
+          <div>
+            <h2 class="text-2xl font-semibold mb-2">{{ steps[reviewStepIndex] }}</h2>
             <p class="text-gray-500 mb-4">
               Review your information before completing
             </p>
@@ -140,6 +190,15 @@
               <p class="text-sm font-medium text-gray-600">Location</p>
               <p class="text-gray-900">{{ form.location || '(Not provided)' }}</p>
             </div>
+            <!-- Payment Info (Freelancers only) -->
+            <div v-if="isFreelancer">
+              <p class="text-sm font-medium text-gray-600">Payment Info</p>
+              <div v-if="form.bank_name || form.bank_account_no" class="mt-1">
+                <p class="text-gray-900">{{ form.bank_name }} - {{ maskAccountNumber(form.bank_account_no) }}</p>
+                <p class="text-gray-600 text-sm">{{ form.bank_account_holder }}</p>
+              </div>
+              <p v-else class="text-gray-500 text-sm">(Will be added later)</p>
+            </div>
           </div>
         </div>
 
@@ -159,7 +218,7 @@
           </UButton>
           <div class="flex-1" />
           <UButton
-            v-if="currentStep < 3"
+            v-if="currentStep < reviewStepIndex"
             color="primary"
             @click="nextStep"
             :disabled="!canProceed"
@@ -167,7 +226,7 @@
             Next
           </UButton>
           <UButton
-            v-if="currentStep === 3"
+            v-if="currentStep === reviewStepIndex"
             color="primary"
             @click="submitProfile"
             :loading="isSubmitting"
@@ -197,15 +256,32 @@ useSeoMeta({
 const router = useRouter()
 const user = userStore()
 
-const steps = ['About You', 'Skills', 'Location', 'Review']
+// Steps depend on user role - freelancers have payment info step
+const isFreelancer = computed(() => user.user?.role === 'freelancer')
+const steps = computed(() => 
+  isFreelancer.value 
+    ? ['About You', 'Skills', 'Location', 'Payment Info', 'Review']
+    : ['About You', 'Skills', 'Location', 'Review']
+)
+const reviewStepIndex = computed(() => steps.value.length - 1)
+const paymentStepIndex = computed(() => isFreelancer.value ? 3 : -1)
 const currentStep = ref(0)
+
+// Helper to mask bank account number
+const maskAccountNumber = (accountNo: string) => {
+  if (!accountNo || accountNo.length < 4) return accountNo
+  return '••••' + accountNo.slice(-4)
+}
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 
 const form = reactive({
   bio: '',
   skills: [] as number[],
-  location: ''
+  location: '',
+  bank_name: '',
+  bank_account_no: '',
+  bank_account_holder: ''
 })
 
 const availableSkills = ref<Array<{label: string; id: number}>>([])
@@ -234,6 +310,8 @@ const canProceed = computed(() => {
   if (currentStep.value === 0) return form.bio.trim().length >= 10
   if (currentStep.value === 1) return form.skills.length > 0
   if (currentStep.value === 2) return form.location.trim().length >= 2
+  // Payment info step is optional for freelancers
+  if (isFreelancer.value && currentStep.value === paymentStepIndex.value) return true
   return true
 })
 
@@ -246,7 +324,7 @@ function nextStep() {
     return
   }
   errorMessage.value = ''
-  if (currentStep.value < steps.length - 1) {
+  if (currentStep.value < reviewStepIndex.value) {
     currentStep.value++
   }
 }
@@ -267,17 +345,26 @@ async function submitProfile() {
   isSubmitting.value = true
   try {
     const token = useMyTokenStore().accessToken
+    const payload: any = {
+      user_id: user.user?.user_id,
+      bio: form.bio,
+      skills: form.skills,
+      location: form.location
+    }
+
+    // Include bank info for freelancers
+    if (isFreelancer.value) {
+      payload.bank_name = form.bank_name || null
+      payload.bank_account_no = form.bank_account_no || null
+      payload.bank_account_holder = form.bank_account_holder || null
+    }
+
     await $fetch('/api/user/complete-profile', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`
       },
-      body: {
-        user_id: user.user?.user_id,
-        bio: form.bio,
-        skills: form.skills,
-        location: form.location
-      }
+      body: payload
     })
 
     // Redirect to explore page

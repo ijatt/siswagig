@@ -5,6 +5,9 @@ interface CompleteProfileBody {
   bio: string
   skills: number[]
   location: string
+  bank_name?: string | null
+  bank_account_no?: string | null
+  bank_account_holder?: string | null
 }
 
 export default defineEventHandler(async (event) => {
@@ -15,14 +18,22 @@ export default defineEventHandler(async (event) => {
 
     const body = await readBody<CompleteProfileBody>(event)
 
+    // Build update data
+    const updateData: any = {
+      bio: body.bio,
+      location: body.location,
+      profile_completed: true
+    }
+
+    // Add bank info if provided (for freelancers)
+    if (body.bank_name !== undefined) updateData.bank_name = body.bank_name
+    if (body.bank_account_no !== undefined) updateData.bank_account_no = body.bank_account_no
+    if (body.bank_account_holder !== undefined) updateData.bank_account_holder = body.bank_account_holder
+
     // Update user profile
     const updatedUser = await prisma.user.update({
       where: { user_id: body.user_id },
-      data: {
-        bio: body.bio,
-        location: body.location,
-        profile_completed: true
-      }
+      data: updateData
     })
 
     // Add skills to user

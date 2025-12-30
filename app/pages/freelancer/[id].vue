@@ -192,7 +192,7 @@
                     </span>
                     <span v-if="item.job.reviews?.length > 0" class="flex items-center gap-1 text-xs text-amber-600">
                       <UIcon name="i-lucide-star" class="w-3 h-3 fill-amber-400" />
-                      {{ item.job.reviews[0].rating }}.0
+                      {{ item.job.reviews?.[0]?.rating }}.0
                     </span>
                   </div>
                   <span class="text-xs text-gray-400">
@@ -461,11 +461,11 @@
                     v-for="n in 5" 
                     :key="n" 
                     name="i-lucide-star" 
-                    :class="['w-5 h-5', n <= selectedPortfolioItem.job.reviews[0].rating ? 'text-amber-400 fill-amber-400' : 'text-gray-200']" 
+                    :class="['w-5 h-5', n <= (selectedPortfolioItem.job?.reviews?.[0]?.rating ?? 0) ? 'text-amber-400 fill-amber-400' : 'text-gray-200']" 
                   />
-                  <span class="ml-2 font-semibold text-amber-800">{{ selectedPortfolioItem.job.reviews[0].rating }}.0</span>
+                  <span class="ml-2 font-semibold text-amber-800">{{ selectedPortfolioItem.job?.reviews[0]?.rating }}.0</span>
                 </div>
-                <p class="text-amber-700">{{ selectedPortfolioItem.job.reviews[0].comment }}</p>
+                <p class="text-amber-700">{{ selectedPortfolioItem.job?.reviews[0]?.comment }}</p>
               </div>
             </div>
           </div>

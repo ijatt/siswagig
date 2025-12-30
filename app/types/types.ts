@@ -59,3 +59,90 @@ export interface Application {
   job: Job;
   user: User;
 }
+
+// ==================== PAYMENT TYPES ====================
+
+export type PaymentStatusType = 'pending' | 'paid' | 'released' | 'refunded' | 'failed';
+
+export interface Payment {
+  payment_id: number;
+  application_id: number;
+  amount: number;
+  platform_fee: number;
+  freelancer_amount: number;
+  currency: string;
+  status: PaymentStatusType;
+  description?: string;
+  paid_at?: string;
+  released_at?: string;
+  refunded_at?: string;
+  created_at: string;
+  job?: {
+    job_id: number;
+    title: string;
+    status: string;
+    image_url?: string;
+    category?: string;
+  };
+  client?: {
+    user_id: number;
+    name: string;
+    email?: string;
+    image_url?: string;
+  };
+  freelancer?: {
+    user_id: number;
+    name: string;
+    email?: string;
+    image_url?: string;
+  };
+  application_status?: string;
+  is_client?: boolean;
+  is_freelancer?: boolean;
+}
+
+export interface PaymentTotals {
+  total_earned: number;
+  total_pending: number;
+  total_held: number;
+  total_paid: number;
+}
+
+export interface StripeAccountStatus {
+  connected: boolean;
+  accountId?: string;
+  chargesEnabled?: boolean;
+  payoutsEnabled?: boolean;
+  onboardingComplete?: boolean;
+  accountStatus?: string;
+  onboardingUrl?: string;
+  message?: string;
+}
+
+export interface CreatePaymentResponse {
+  success: boolean;
+  payment: {
+    payment_id: number;
+    amount: number;
+    platform_fee: number;
+    freelancer_amount: number;
+    status: string;
+  };
+  clientSecret: string;
+  publishableKey: string;
+}
+
+export interface PaymentActionResponse {
+  success: boolean;
+  payment: {
+    payment_id: number;
+    status: string;
+    paid_at?: string;
+    released_at?: string;
+    refunded_at?: string;
+    amount?: number;
+    freelancer_amount?: number;
+    transfer_id?: string;
+  };
+  message: string;
+}

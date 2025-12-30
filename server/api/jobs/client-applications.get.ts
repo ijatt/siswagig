@@ -22,6 +22,13 @@ export default defineEventHandler(async (event) => {
                 location: true,
                 bio: true
               }
+            },
+            payment: {
+              select: {
+                payment_id: true,
+                status: true,
+                amount: true
+              }
             }
           }
         }

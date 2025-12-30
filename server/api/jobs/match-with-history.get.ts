@@ -253,7 +253,7 @@ function generateMatchReasons(
   if (job.requiredSkills) {
     const jobSkills = job.requiredSkills.split(",").map((s: string) => s.trim());
     const matchedSkills = userSkills.filter(skill =>
-      jobSkills.some(jobSkill =>
+      jobSkills.some((jobSkill: string) =>
         jobSkill.toLowerCase().includes(skill.toLowerCase()) ||
         skill.toLowerCase().includes(jobSkill.toLowerCase())
       )

@@ -17,9 +17,18 @@ export default defineEventHandler(async (event) => {
             name: true,
             image_url: true,
             user_id: true,
+            bank_name: true,
+            bank_account_no: true,
+            bank_account_holder: true,
             userSkills: {
               select: {
                 skill: true
+              }
+            },
+            stripeAccount: {
+              select: {
+                onboarding_complete: true,
+                charges_enabled: true
               }
             }
           }
@@ -34,7 +43,8 @@ export default defineEventHandler(async (event) => {
               }
             }
           }
-        }
+        },
+        payment: true
       } as any)
     })
     if (!application) return createError({ statusCode: 404, statusMessage: "No application found" })
