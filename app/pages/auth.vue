@@ -153,10 +153,49 @@ async function login(payload: FormSubmitEvent<Schema>) {
     // Get the new token from access-token endpoint
     const tokenRes = await $fetch('/api/user/access-token', {
       method: 'POST'
-    }) as { accessToken: string }
+    }) as string
     
-    if (tokenRes?.accessToken) {
-      useMyTokenStore().setToken(tokenRes.accessToken)
+    console.log('Token response:', tokenRes)
+    
+    if (tokenRes && typeof tokenRes === 'string') {
+      useMyTokenStore().setToken(tokenRes)
+      
+      // Fetch user data to check role
+      const userData = await $fetch('/api/user', {
+        headers: {
+          Authorization: `Bearer ${tokenRes}`
+        }
+      }) as any
+      
+      console.log('User data:', userData)
+      console.log('User role:', userData?.role)
+      
+      // Store user data
+      userStore().setUser({
+        user_id: userData.user_id,
+        name: userData.name,
+        email: userData.email,
+        role: userData.role,
+        imageUrl: userData.image_url,
+        profile_completed: userData.profile_completed
+      })
+      
+      toast.add({
+        id: "login-success",
+        title: "Login Success",
+        description: `Welcome back, ${res}!`,
+        color: "success"
+      })
+      
+      // Redirect based on role
+      if (userData?.role === 'admin') {
+        console.log('Redirecting to admin...')
+        await navigateTo("/admin")
+      } else {
+        console.log('Redirecting to explore...')
+        await navigateTo("/explore")
+      }
+      return
     }
     
     toast.add({
@@ -169,6 +208,7 @@ async function login(payload: FormSubmitEvent<Schema>) {
     // Navigate after setting token
     await navigateTo("/explore")
   } catch (error: any) {
+    console.error('Login error:', error)
     toast.add({
       id: "login-error",
       title: "Login Error",

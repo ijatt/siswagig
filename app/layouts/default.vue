@@ -232,8 +232,65 @@ const client = computed(() => [
   ]
 ])
 
+// Admin dropdown menu
+const admin = computed(() => [
+  [
+    {
+      label: userStore().user?.name,
+      avatar: {
+        src: userStore().user?.imageUrl ?? "https://icons.veryicon.com/png/o/miscellaneous/standard/avatar-15.png"
+      },
+      type: 'label'
+    }
+  ],
+  [
+    {
+      label: 'Admin Dashboard',
+      icon: 'i-lucide-layout-dashboard',
+      async onSelect() {
+        await navigateTo('/admin')
+      },
+    },
+    {
+      label: 'Manage Users',
+      icon: 'i-lucide-users',
+      async onSelect() {
+        await navigateTo('/admin/users')
+      },
+    },
+    {
+      label: 'Manage Jobs',
+      icon: 'i-lucide-briefcase',
+      async onSelect() {
+        await navigateTo('/admin/jobs')
+      },
+    }
+  ],
+  [
+    {
+      label: 'Explore',
+      icon: 'i-lucide-compass',
+      async onSelect() {
+        await navigateTo('/explore')
+      },
+    }
+  ],
+  [
+    {
+      label: 'Logout',
+      icon: 'i-lucide-log-out',
+      kbds: ['shift', 'meta', 'q'],
+      onSelect() {
+        logout()
+      } 
+    }
+  ]
+])
+
 const dropDownItem = computed(() => {
-  if (userStore().user?.role === 'freelancer') {
+  if (userStore().user?.role === 'admin') {
+    return admin.value
+  } else if (userStore().user?.role === 'freelancer') {
     return freelancer.value
   } else {
     return client.value
