@@ -23,32 +23,54 @@ export function getSocketServer() {
 
 export default defineNitroPlugin((nitroApp) => {
   let socketServer: SocketIOServer | null = null
+  let retryCount = 0
+  const maxRetries = 5
 
   const initSocket = () => {
     if (socketServer) return socketServer
+    if (retryCount >= maxRetries) {
+      console.warn('Socket.IO: Max retries reached, continuing without socket server')
+      return null
+    }
 
-    socketServer = new SocketIOServer(3001, {
-      serveClient: false,
-      cors: {
-        origin: '*',
-        methods: ['GET', 'POST']
-      },
-      transports: ['websocket', 'polling']
-    })
+    try {
+      socketServer = new SocketIOServer(3001, {
+        serveClient: false,
+        cors: {
+          origin: '*',
+          methods: ['GET', 'POST']
+        },
+        transports: ['websocket', 'polling']
+      })
 
-    // Store globally
-    globalSocketServer = socketServer
+      // Store globally
+      globalSocketServer = socketServer
+      retryCount = 0
 
-    socketServer.on('error', (err: any) => {
-      console.error('Socket.IO error:', err)
-      if (err.code === 'EADDRINUSE') {
-        console.log('Port 3001 in use, retrying...')
+      socketServer.on('error', (err: any) => {
+        console.error('Socket.IO error:', err)
+        if (err.code === 'EADDRINUSE') {
+          retryCount++
+          console.log(`Port 3001 in use, retry ${retryCount}/${maxRetries}...`)
+          if (socketServer) {
+            socketServer.close()
+            socketServer = null
+            globalSocketServer = null
+          }
+          setTimeout(() => {
+            initSocket()
+          }, 2000)
+        }
+      })
+    } catch (err: any) {
+      console.error('Socket.IO initialization error:', err)
+      retryCount++
+      if (retryCount < maxRetries) {
         setTimeout(() => {
-          socketServer = null
           initSocket()
-        }, 1000)
+        }, 2000)
       }
-    })
+    }
 
     socketServer.on('connection', (socket) => {
       console.log('User connected:', socket.id)
