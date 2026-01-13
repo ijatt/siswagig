@@ -4,28 +4,33 @@ export default defineEventHandler(async (event) => {
   try {
     const userID = await checkAccessToken(event);
 
-    if (!userID)
-      return createError({
+    if (!userID) {
+      throw createError({
         statusCode: 401,
         statusMessage: "Unauthorized",
       });
+    }
 
-    const primsa = new PrismaClient();
-    const user = await primsa.user.findUnique({
+    const prisma = new PrismaClient();
+    const user = await prisma.user.findUnique({
       where: {
         user_id: userID as number,
       },
     });
 
-    if (!user)
-      return createError({
+    if (!user) {
+      throw createError({
         statusCode: 404,
         statusMessage: "User not found",
       });
+    }
 
     return user;
-  } catch (error) {
-    return createError({
+  } catch (error: any) {
+    if (error.statusCode) {
+      throw error;
+    }
+    throw createError({
       statusCode: 500,
       statusMessage: "Internal Server Error",
     });

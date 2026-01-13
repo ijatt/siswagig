@@ -12,7 +12,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   // If token exists in store, validate it by fetching user data
   if (tokenStore.accessToken) {
     try {
-      const { data: user } = await useFetch('/api/user/index', {
+      const { data: user } = await useFetch('/api/user', {
         headers: {
           Authorization: `Bearer ${tokenStore.accessToken}`
         }
