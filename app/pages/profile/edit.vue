@@ -308,6 +308,7 @@
           <!-- Skills Section -->
           <div 
             v-show="activeSection === 'skills'"
+            v-if="isFreelancer"
             class="bg-white rounded-2xl border border-gray-100 overflow-hidden"
           >
             <div class="px-6 py-4 border-b border-gray-100">
