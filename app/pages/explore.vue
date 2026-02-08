@@ -21,6 +21,11 @@ const searchQuery = ref("");
 const useRecommendations = ref(true);
 const minSimilarity = ref(0.35);
 
+// Location state
+const isUpdatingLocation = ref(false);
+const locationUpdateSuccess = ref(false);
+const locationUpdateError = ref('');
+
 // Job recommendation composable
 const {
   recommendations,
@@ -56,6 +61,9 @@ interface User {
   role: string | null;
   imageUrl: string | null;
   profile_completed: boolean | null;
+  location?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 const user = ref<User>({
@@ -65,6 +73,9 @@ const user = ref<User>({
   role: null,
   imageUrl: null,
   profile_completed: null,
+  location: null,
+  latitude: null,
+  longitude: null,
 });
 
 // Computed property to determine which jobs to display
@@ -90,6 +101,85 @@ async function loadJobs() {
   } finally {
     jobsLoading.value = false;
   }
+}
+
+// Update location to current GPS position
+async function updateToCurrentLocation() {
+  if (!navigator.geolocation) {
+    locationUpdateError.value = 'Geolocation is not supported by your browser'
+    return
+  }
+
+  isUpdatingLocation.value = true
+  locationUpdateError.value = ''
+  locationUpdateSuccess.value = false
+
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const { latitude, longitude } = position.coords
+      
+      // Get location name via reverse geocoding
+      let locationName = user.value.location || ''
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+        )
+        const data = await response.json()
+        if (data.address) {
+          const { city, town, village, state, suburb } = data.address
+          locationName = [suburb, city || town || village, state].filter(Boolean).join(', ')
+        }
+      } catch (err) {
+        console.error('Reverse geocoding failed:', err)
+      }
+
+      // Save to database
+      try {
+        const tokenStore = useMyTokenStore()
+        await $fetch(`/api/user/${user.value.user_id}`, {
+          method: 'PATCH',
+          headers: {
+            Authorization: `Bearer ${tokenStore.accessToken}`
+          },
+          body: {
+            location: locationName,
+            latitude,
+            longitude
+          }
+        })
+
+        // Update local user state
+        user.value.location = locationName
+        user.value.latitude = latitude
+        user.value.longitude = longitude
+        userStore().user = user.value
+
+        locationUpdateSuccess.value = true
+        setTimeout(() => { locationUpdateSuccess.value = false }, 3000)
+
+        // Refresh recommendations with new location
+        await getAdvancedRecommendations({ 
+          minSimilarity: minSimilarity.value,
+          limit: 20 
+        })
+      } catch (err) {
+        console.error('Failed to save location:', err)
+        locationUpdateError.value = 'Failed to save location'
+      }
+
+      isUpdatingLocation.value = false
+    },
+    (error) => {
+      const errorMessages: Record<number, string> = {
+        1: 'Location permission denied. Please enable it in browser settings.',
+        2: 'Location unavailable.',
+        3: 'Location request timed out.'
+      }
+      locationUpdateError.value = errorMessages[error.code] || 'Failed to get location'
+      isUpdatingLocation.value = false
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  )
 }
 
 onMounted(async () => {
@@ -176,6 +266,42 @@ onMounted(async () => {
 
     <!-- Main Content -->
     <div class="max-w-5xl mx-auto px-6 py-8 space-y-8">
+      <!-- Location Banner -->
+      <div v-if="user.role === 'freelancer'" class="rounded-2xl bg-white border border-gray-200 p-4 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
+              <UIcon name="i-lucide-map-pin" class="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p class="text-sm text-gray-500">Your Location</p>
+              <p class="font-semibold text-gray-900">{{ user.location || 'Not set' }}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <!-- Success Message -->
+            <Transition name="fade">
+              <span v-if="locationUpdateSuccess" class="text-sm text-green-600 flex items-center gap-1">
+                <UIcon name="i-lucide-check-circle" class="w-4 h-4" />
+                Updated!
+              </span>
+            </Transition>
+            <!-- Error Message -->
+            <span v-if="locationUpdateError" class="text-sm text-red-600">{{ locationUpdateError }}</span>
+            <!-- Update Button -->
+            <button
+              @click="updateToCurrentLocation"
+              :disabled="isUpdatingLocation"
+              class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 hover:bg-gray-200 text-gray-700 transition-all disabled:opacity-50"
+            >
+              <UIcon v-if="isUpdatingLocation" name="i-lucide-loader-2" class="w-4 h-4 animate-spin" />
+              <UIcon v-else name="i-lucide-refresh-cw" class="w-4 h-4" />
+              {{ isUpdatingLocation ? 'Updating...' : 'Use Current Location' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- AI Info Banner -->
       <div
         v-if="useRecommendations && recommendations.length > 0"
