@@ -321,12 +321,11 @@
                 </label>
                 <USelectMenu
                   v-model="form.skills"
-                  :items="availableSkills"
+                  :items="skillOptions"
                   multiple
                   searchable
                   placeholder="Search and select skills..."
-                  value-attribute="skill_id"
-                  option-attribute="name"
+                  value-key="value"
                   :loading="loadingSkills"
                   class="w-full"
                 />
@@ -594,6 +593,14 @@ const saving = ref(false)
 const successMessage = ref<string | null>(null)
 const errorMessage = ref<string | null>(null)
 
+// Format skills for USelectMenu (Nuxt UI 4 format)
+const skillOptions = computed(() => {
+  return availableSkills.value.map(skill => ({
+    label: skill.name,
+    value: skill.skill_id
+  }))
+})
+
 // Location detection
 const isDetectingLocation = ref(false)
 const locationError = ref('')
@@ -612,8 +619,8 @@ const onFileChange = (event: Event) => {
 
 // Get skill name by ID
 const getSkillName = (skillId: number) => {
-  const skill = availableSkills.value.find(s => s.skill_id === skillId)
-  return skill?.name || 'Unknown'
+  const skill = skillOptions.value.find(s => s.value === skillId)
+  return skill?.label || 'Unknown'
 }
 
 // Remove skill
@@ -768,9 +775,9 @@ async function onSave() {
   }
 }
 
-onMounted(() => {
-  loadSkills()
-  loadUser()
+onMounted(async () => {
+  await loadSkills()
+  await loadUser()
 })
 </script>
 
