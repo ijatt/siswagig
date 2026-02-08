@@ -23,54 +23,35 @@ export function getSocketServer() {
 
 export default defineNitroPlugin((nitroApp) => {
   let socketServer: SocketIOServer | null = null
-  let retryCount = 0
-  const maxRetries = 5
 
-  const initSocket = () => {
+  const initSocket = (server: any) => {
     if (socketServer) return socketServer
-    if (retryCount >= maxRetries) {
-      console.warn('Socket.IO: Max retries reached, continuing without socket server')
-      return null
-    }
 
     try {
-      socketServer = new SocketIOServer(3001, {
+      // Attach Socket.IO to the existing HTTP server (works on App Platform)
+      socketServer = new SocketIOServer(server, {
         serveClient: false,
         cors: {
-          origin: '*',
-          methods: ['GET', 'POST']
+          origin: process.env.APP_URL || '*',
+          methods: ['GET', 'POST'],
+          credentials: true
         },
-        transports: ['websocket', 'polling']
+        transports: ['websocket', 'polling'],
+        path: '/socket.io/'
       })
 
       // Store globally
       globalSocketServer = socketServer
-      retryCount = 0
 
       socketServer.on('error', (err: any) => {
         console.error('Socket.IO error:', err)
-        if (err.code === 'EADDRINUSE') {
-          retryCount++
-          console.log(`Port 3001 in use, retry ${retryCount}/${maxRetries}...`)
-          if (socketServer) {
-            socketServer.close()
-            socketServer = null
-            globalSocketServer = null
-          }
-          setTimeout(() => {
-            initSocket()
-          }, 2000)
-        }
       })
     } catch (err: any) {
       console.error('Socket.IO initialization error:', err)
-      retryCount++
-      if (retryCount < maxRetries) {
-        setTimeout(() => {
-          initSocket()
-        }, 2000)
-      }
+      return null
     }
+
+    if (!socketServer) return null
 
     socketServer.on('connection', (socket) => {
       console.log('User connected:', socket.id)
@@ -176,6 +157,12 @@ export default defineNitroPlugin((nitroApp) => {
     return socketServer
   }
 
-  // Initialize socket server
-  initSocket()
+  // Hook into Nitro's request event to get the underlying server
+  nitroApp.hooks.hook('request', (event) => {
+    if (!globalSocketServer && (event.node?.req?.socket as any)?.server) {
+      const server = (event.node.req.socket as any).server
+      initSocket(server)
+      console.log('Socket.IO initialized on the main server')
+    }
+  })
 })

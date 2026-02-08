@@ -151,6 +151,15 @@ const freelancer = computed(() => [
   ],
   [
     {
+      label: 'Payments',
+      icon: 'i-lucide-credit-card',
+      async onSelect() {
+        await navigateTo('/payments')
+      },
+    }
+  ],
+  [
+    {
       label: 'Inbox',
       icon: 'bxs-envelope',
       async onSelect() {

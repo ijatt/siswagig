@@ -9,6 +9,17 @@ const messages = ref<any[]>([])
 const typingUsers = ref<Set<number>>(new Set())
 let isInitialized = false
 
+// Get Socket.IO URL based on environment
+const getSocketUrl = () => {
+  // In browser, connect to same origin (works for both dev and production)
+  if (typeof window !== 'undefined') {
+    // Use APP_URL from runtime config, or fallback to window.location.origin
+    const config = useRuntimeConfig()
+    return config.public.APP_URL || window.location.origin
+  }
+  return 'http://localhost:3000'
+}
+
 export const useSocket = () => {
   const initSocket = () => {
     if (socket && socket.connected) {
@@ -20,13 +31,15 @@ export const useSocket = () => {
       return socket
     }
 
-    // Connect to Socket.IO server on port 3001
-    socket = io('http://localhost:3001', {
+    // Connect to Socket.IO server on same origin (works on App Platform)
+    const socketUrl = getSocketUrl()
+    socket = io(socketUrl, {
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       reconnectionAttempts: 5,
       transports: ['websocket', 'polling'],
+      path: '/socket.io/',
       auth: {
         token: useMyTokenStore().accessToken
       }
