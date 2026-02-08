@@ -45,8 +45,17 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 403, statusMessage: 'Only the job owner can create a payment' })
     }
 
+    // If payment already exists and is pending, delete it and create new checkout
+    // This handles cases where user abandoned the checkout page
     if (application.payment) {
-      throw createError({ statusCode: 400, statusMessage: 'Payment already exists for this application' })
+      if (application.payment.status === 'pending') {
+        // Delete the old pending payment to allow retry
+        await prisma.payment.delete({
+          where: { payment_id: application.payment.payment_id }
+        })
+      } else {
+        throw createError({ statusCode: 400, statusMessage: 'Payment already exists for this application' })
+      }
     }
 
     if (!['Submitted', 'Completed'].includes(application.status)) {

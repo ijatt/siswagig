@@ -437,7 +437,8 @@ async function fetchApplication() {
 }
 
 async function createPayment() {
-  if (!applicationId.value) return
+  // Prevent double-clicks
+  if (!applicationId.value || creatingPayment.value) return
   
   creatingPayment.value = true
   
