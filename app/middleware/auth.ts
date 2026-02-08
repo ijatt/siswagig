@@ -12,13 +12,29 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
   // If token exists in store, validate it by fetching user data
   if (tokenStore.accessToken) {
     try {
+      // Check user store first - if profile_completed is already true, skip API call
+      if (userStore_instance.user?.profile_completed) {
+        return
+      }
+
       const { data: user } = await useFetch('/api/user', {
         headers: {
           Authorization: `Bearer ${tokenStore.accessToken}`
-        }
+        },
+        key: `user-${Date.now()}` // Prevent caching
       })
 
       if (user.value) {
+        // Update user store with fresh data
+        userStore_instance.setUser({
+          user_id: user.value.user_id,
+          name: user.value.name,
+          email: user.value.email,
+          role: user.value.role,
+          imageUrl: user.value.image_url,
+          profile_completed: user.value.profile_completed
+        })
+
         // Token is valid and user data is accessible
         // Check if user is a freelancer and hasn't completed profile
         if (user.value.role === 'freelancer' && !user.value.profile_completed && to.path !== '/complete-profile') {
