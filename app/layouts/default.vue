@@ -206,18 +206,20 @@ const client = computed(() => [
       }
     },
     {
-      label: 'My Posted Jobs',
-      icon: 'mdi-application-edit',
-      async onSelect() {
-        await navigateTo('/jobs')
-      }
-    },
-    {
       label: 'Job Applications',
       icon: 'mdi-application-edit',
       async onSelect() {
         await navigateTo('/client/applications')
       }
+    }
+  ],
+  [
+    {
+      label: 'Payments',
+      icon: 'i-lucide-credit-card',
+      async onSelect() {
+        await navigateTo('/payments')
+      },
     }
   ],
   [
