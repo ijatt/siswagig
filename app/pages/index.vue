@@ -39,17 +39,17 @@
             <!-- Stats -->
             <div class="flex items-center gap-8 pt-4">
               <div>
-                <p class="text-3xl font-bold text-gray-900">500+</p>
+                <p class="text-3xl font-bold text-gray-900">{{ formattedStats.activeJobs }}</p>
                 <p class="text-sm text-gray-500">Active Jobs</p>
               </div>
               <div class="w-px h-12 bg-gray-200"></div>
               <div>
-                <p class="text-3xl font-bold text-gray-900">1.2k</p>
+                <p class="text-3xl font-bold text-gray-900">{{ formattedStats.totalStudents }}</p>
                 <p class="text-sm text-gray-500">Students</p>
               </div>
               <div class="w-px h-12 bg-gray-200"></div>
               <div>
-                <p class="text-3xl font-bold text-gray-900">98%</p>
+                <p class="text-3xl font-bold text-gray-900">{{ formattedStats.satisfactionRate }}</p>
                 <p class="text-sm text-gray-500">Satisfaction</p>
               </div>
             </div>
@@ -117,7 +117,7 @@
         </div>
         
         <div class="grid md:grid-cols-3 gap-6">
-          <div v-for="(job, i) in jobs" :key="i" class="card-modern overflow-hidden group">
+          <div v-for="(job, i) in jobs" :key="i" @click="navigateTo(`/jobs/${job.id}`)" class="card-modern overflow-hidden group">
             <img :src="job.image" :alt="job.title" class="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300" />
             <div class="p-6">
               <p class="text-xs text-violet-600 font-medium mb-2">{{ job.date }}</p>
@@ -197,6 +197,61 @@ useSeoMeta({
   ogDescription: 'The freelance marketplace built by UiTM for UiTM students. Find gigs, hire talent, and grow your career.',
   ogType: 'website'
 })
+
+// Fetch dynamic data
+const { data: stats } = await useFetch('/api/stats/public')
+const { data: jobsData } = await useFetch<any[]>('/api/jobs')
+const { data: freelancersData } = await useFetch<any[]>('/api/user/freelancers', {
+  query: { limit: 4 }
+})
+
+// Format stats for display
+const formattedStats = computed(() => ({
+  activeJobs: formatNumber(stats.value?.activeJobs || 0),
+  totalStudents: formatNumber(stats.value?.totalStudents || 0),
+  satisfactionRate: `${stats.value?.satisfactionRate || 95}%`
+}))
+
+// Get latest 3 jobs
+const jobs = computed(() => {
+  if (!jobsData.value || !Array.isArray(jobsData.value)) return []
+  return jobsData.value.slice(0, 3).map((job) => ({
+    id: job.job_id,
+    title: job.title,
+    description: job.description,
+    date: formatDate(job.created_at),
+    image: job.image_url || 'https://picsum.photos/400/300'
+  }))
+})
+
+// Get top freelancers
+const freelancers = computed(() => {
+  if (!freelancersData.value || !Array.isArray(freelancersData.value)) return []
+  return freelancersData.value.slice(0, 4).map((f) => ({
+    name: f.name,
+    skill: f.userSkills?.[0]?.skill?.name || 'Freelancer',
+    bio: f.bio || 'Ready to help with your projects.',
+    location: f.location || 'UiTM',
+    image: f.image_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(f.name)}&background=8b5cf6&color=fff`
+  }))
+})
+
+// Helper functions
+function formatNumber(num: number): string {
+  if (num >= 1000) {
+    return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k'
+  }
+  return num.toString() + '+'
+}
+
+function formatDate(dateString: string): string {
+  return new Date(dateString).toLocaleDateString('en-MY', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
+}
+
 const features = ref([
   {
     title: 'Smart Job Matching',
@@ -217,46 +272,4 @@ const features = ref([
     to: '#'
   }
 ])
-const jobs = ref([
-  {
-    title: "Design a UiTM Event Poster",
-    description:
-      "Looking for a creative student to design an A3 poster for an upcoming UiTM event.",
-    date: '2025-08-22',
-    image: 'https://picsum.photos/400/300'
-  },
-  {
-    title: "Build a Faculty Blog Website",
-    description:
-      "Need a frontend developer to create a simple Nuxt site for our faculty news.",
-    date: '2025-08-21',
-    image: 'https://picsum.photos/400/300'
-  },
-  {
-    title: "Proofread Final Year Project Report",
-    description:
-      "Seeking a detail-oriented student to proofread grammar and formatting for a 50-page FYP report.",
-    date: '2025-09-01',
-    image: 'https://picsum.photos/400/300'
-  }
-  ]);
-
-  const freelancers = [
-  {
-    name: "Aina Rahman",
-    skill: "Graphic Designer",
-    bio: "Experienced in poster and banner design. Canva, Figma, Photoshop.",
-    location: "UiTM Puncak Alam",
-    image:
-      "https://plus.unsplash.com/premium_photo-1689530775582-83b8abdb5020?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8cmFuZG9tJTIwcGVyc29ufGVufDB8fDB8fHww",
-  },
-  {
-    name: "Hakim Aiman",
-    skill: "Web Developer",
-    bio: "Frontend dev familiar with Nuxt, Tailwind, and Firebase.",
-    location: "UiTM Shah Alam",
-    image:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D-focus-photography-of-woman-outdoor-during-day-rDEOVtE7vOs",
-  },
-];
 </script>
