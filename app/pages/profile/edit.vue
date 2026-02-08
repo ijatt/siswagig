@@ -613,7 +613,7 @@ const onFileChange = (event: Event) => {
 // Get skill name by ID
 const getSkillName = (skillId: number) => {
   const skill = availableSkills.value.find(s => s.skill_id === skillId)
-  return skill?.label || skill?.name || 'Unknown'
+  return skill?.name || 'Unknown'
 }
 
 // Remove skill
@@ -625,11 +625,13 @@ async function loadSkills() {
   try {
     loadingSkills.value = true
     const skills = await $fetch<any[]>('/api/skills')
-    availableSkills.value = skills
+    availableSkills.value = skills.map(skill => ({ 
+      name: skill.name, 
+      skill_id: skill.skill_id 
+    }))
   } catch (err) {
     errorMessage.value = 'Unable to load skills.'
   } finally {
-    availableSkills.value = availableSkills.value.map(skill => ({ label: skill.name, skill_id: skill.skill_id }))
     loadingSkills.value = false
   }
 }

@@ -16,6 +16,13 @@ export default defineEventHandler(async (event) => {
       where: {
         user_id: userID as number,
       },
+      include: {
+        userSkills: {
+          include: {
+            skill: true
+          }
+        }
+      }
     });
 
     if (!user) {
