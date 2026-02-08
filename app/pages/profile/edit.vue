@@ -216,6 +216,48 @@
               <p class="text-sm text-gray-500">Set your location for local job matching</p>
             </div>
             <div class="p-6 space-y-5">
+              <!-- Auto-detect Button -->
+              <button
+                @click="detectLocation"
+                :disabled="isDetectingLocation"
+                class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl font-medium hover:from-purple-600 hover:to-indigo-700 transition-all disabled:opacity-50"
+              >
+                <UIcon v-if="isDetectingLocation" name="i-lucide-loader-2" class="w-5 h-5 animate-spin" />
+                <UIcon v-else name="i-lucide-map-pin" class="w-5 h-5" />
+                {{ isDetectingLocation ? 'Detecting...' : 'Detect My Location' }}
+              </button>
+              
+              <!-- Location Error -->
+              <div v-if="locationError" class="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2 text-red-700 text-sm">
+                <UIcon name="i-lucide-alert-circle" class="w-4 h-4 flex-shrink-0" />
+                {{ locationError }}
+              </div>
+              
+              <!-- Detected Coordinates -->
+              <div v-if="detectedCoords" class="bg-green-50 border border-green-200 rounded-xl p-4">
+                <div class="flex items-center gap-2 text-green-700 mb-2">
+                  <UIcon name="i-lucide-check-circle" class="w-5 h-5" />
+                  <span class="font-medium">Location detected!</span>
+                </div>
+                <p class="text-sm text-green-600 mb-2">
+                  Coordinates: {{ detectedCoords.latitude.toFixed(6) }}, {{ detectedCoords.longitude.toFixed(6) }}
+                </p>
+                <a 
+                  :href="`https://www.google.com/maps?q=${detectedCoords.latitude},${detectedCoords.longitude}`"
+                  target="_blank"
+                  class="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                >
+                  <UIcon name="i-lucide-external-link" class="w-4 h-4" />
+                  View on Google Maps
+                </a>
+              </div>
+
+              <div class="relative flex items-center">
+                <div class="flex-grow border-t border-gray-200"></div>
+                <span class="flex-shrink mx-4 text-gray-400 text-sm">or enter manually</span>
+                <div class="flex-grow border-t border-gray-200"></div>
+              </div>
+
               <!-- Location Text -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -231,17 +273,35 @@
                   />
                 </div>
               </div>
-
-              <!-- Geolocation Picker -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Precise Location (Optional)
-                </label>
-                <p class="text-sm text-gray-500 mb-3">
-                  Enable location services to help find jobs near you
-                </p>
-                <LocationPicker />
+              
+              <!-- Manual Coordinates -->
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Latitude</label>
+                  <input 
+                    v-model.number="form.latitude"
+                    type="number"
+                    step="0.000001"
+                    placeholder="e.g., 3.0738"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-300 focus:ring-2 focus:ring-purple-100 outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Longitude</label>
+                  <input 
+                    v-model.number="form.longitude"
+                    type="number"
+                    step="0.000001"
+                    placeholder="e.g., 101.5183"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-purple-300 focus:ring-2 focus:ring-purple-100 outline-none transition-all"
+                  />
+                </div>
               </div>
+              
+              <p class="text-xs text-gray-400">
+                💡 Tip: You can find coordinates by right-clicking on 
+                <a href="https://maps.google.com" target="_blank" class="text-blue-500 hover:underline">Google Maps</a>
+              </p>
             </div>
           </div>
 
@@ -534,6 +594,11 @@ const saving = ref(false)
 const successMessage = ref<string | null>(null)
 const errorMessage = ref<string | null>(null)
 
+// Location detection
+const isDetectingLocation = ref(false)
+const locationError = ref('')
+const detectedCoords = ref<{ latitude: number; longitude: number } | null>(null)
+
 const fileInput = ref<HTMLInputElement | null>(null);
 const file = ref<File | null>(); // File object
 
@@ -583,15 +648,72 @@ async function loadUser() {
       name: u.name || '',
       bio: u.bio || '',
       location: u.location || '',
+      latitude: u.latitude || null,
+      longitude: u.longitude || null,
       image_url: u.image_url || '',
       skills: u.userSkills ? (u.userSkills as any[]).map((s) => s.skill_id) : [],
       bank_name: u.bank_name || '',
       bank_account_no: u.bank_account_no || '',
       bank_account_holder: u.bank_account_holder || ''
     }
+    // Set detected coords if available
+    if (u.latitude && u.longitude) {
+      detectedCoords.value = { latitude: u.latitude, longitude: u.longitude }
+    }
   } catch (err) {
     errorMessage.value = 'Unable to load profile. Make sure you are signed in.'
   }
+}
+
+// Detect user location using browser geolocation API
+async function detectLocation() {
+  if (!navigator.geolocation) {
+    locationError.value = 'Geolocation is not supported by your browser'
+    return
+  }
+
+  isDetectingLocation.value = true
+  locationError.value = ''
+
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const { latitude, longitude } = position.coords
+      detectedCoords.value = { latitude, longitude }
+      form.value.latitude = latitude
+      form.value.longitude = longitude
+      
+      // Try to get location name using reverse geocoding
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+        )
+        const data = await response.json()
+        if (data.address) {
+          const { city, town, village, state, suburb } = data.address
+          form.value.location = [suburb, city || town || village, state].filter(Boolean).join(', ')
+        }
+      } catch (err) {
+        console.error('Reverse geocoding failed:', err)
+        // User can still enter location name manually
+      }
+      
+      isDetectingLocation.value = false
+    },
+    (error) => {
+      const errorMessages: Record<number, string> = {
+        1: 'Permission denied. Please enable location access in your browser settings.',
+        2: 'Location information is unavailable.',
+        3: 'The request to get your location timed out.'
+      }
+      locationError.value = errorMessages[error.code] || 'Failed to detect location'
+      isDetectingLocation.value = false
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    }
+  )
 }
 
 async function onSave() {
@@ -619,6 +741,8 @@ async function onSave() {
       name: form.value.name,
       bio: form.value.bio,
       location: form.value.location,
+      latitude: form.value.latitude,
+      longitude: form.value.longitude,
       image_url: form.value.image_url,
       skills: form.value.skills.map((s: any) => s.skill_id || s)
     }

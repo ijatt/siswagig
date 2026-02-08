@@ -10,6 +10,8 @@ export default defineEventHandler(async (event) => {
       name?: string
       bio?: string
       location?: string
+      latitude?: number | null
+      longitude?: number | null
       image_url?: string
       skills?: number[]
       bank_name?: string | null
@@ -23,6 +25,8 @@ export default defineEventHandler(async (event) => {
     if (body.name !== undefined) updateData.name = body.name
     if (body.bio !== undefined) updateData.bio = body.bio
     if (body.location !== undefined) updateData.location = body.location
+    if (body.latitude !== undefined) updateData.latitude = body.latitude
+    if (body.longitude !== undefined) updateData.longitude = body.longitude
     if (body.image_url !== undefined) updateData.image_url = body.image_url
     if (body.bank_name !== undefined) updateData.bank_name = body.bank_name
     if (body.bank_account_no !== undefined) updateData.bank_account_no = body.bank_account_no
