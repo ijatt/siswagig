@@ -517,6 +517,14 @@ async function submitProfile() {
       body: payload
     })
 
+    // Update user store to reflect profile completion
+    if (user.user) {
+      user.setUser({
+        ...user.user,
+        profile_completed: true
+      })
+    }
+
     // Redirect to explore page
     await router.push('/explore')
   } catch (err: any) {
