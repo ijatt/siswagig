@@ -73,6 +73,7 @@
               multiple
               searchable
               placeholder="Search and select skills..."
+              class="w-full"
             />
           </div>
           <!-- Selected Skills Display -->
@@ -99,13 +100,90 @@
               Where are you located?
             </p>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
-            <UInput
-              v-model="form.location"
-              placeholder="e.g., Kuala Lumpur, Malaysia"
-              class="w-full"
-            />
+          
+          <!-- Location Detection -->
+          <div class="space-y-4">
+            <!-- Auto-detect Button -->
+            <button
+              @click="detectLocation"
+              :disabled="isDetectingLocation"
+              class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl font-medium hover:from-purple-600 hover:to-indigo-700 transition-all disabled:opacity-50"
+            >
+              <UIcon v-if="isDetectingLocation" name="i-lucide-loader-2" class="w-5 h-5 animate-spin" />
+              <UIcon v-else name="i-lucide-map-pin" class="w-5 h-5" />
+              {{ isDetectingLocation ? 'Detecting...' : 'Detect My Location' }}
+            </button>
+            
+            <!-- Location Error -->
+            <div v-if="locationError" class="bg-red-50 border border-red-200 rounded-xl p-3 flex items-center gap-2 text-red-700 text-sm">
+              <UIcon name="i-lucide-alert-circle" class="w-4 h-4 flex-shrink-0" />
+              {{ locationError }}
+            </div>
+            
+            <!-- Detected Coordinates -->
+            <div v-if="detectedCoords" class="bg-green-50 border border-green-200 rounded-xl p-4">
+              <div class="flex items-center gap-2 text-green-700 mb-3">
+                <UIcon name="i-lucide-check-circle" class="w-5 h-5" />
+                <span class="font-medium">Location detected!</span>
+              </div>
+              <p class="text-sm text-green-600 mb-3">
+                Coordinates: {{ detectedCoords.latitude.toFixed(6) }}, {{ detectedCoords.longitude.toFixed(6) }}
+              </p>
+              <!-- Open in Google Maps -->
+              <a 
+                :href="`https://www.google.com/maps?q=${detectedCoords.latitude},${detectedCoords.longitude}`"
+                target="_blank"
+                class="text-sm text-blue-600 hover:underline flex items-center gap-1"
+              >
+                <UIcon name="i-lucide-external-link" class="w-4 h-4" />
+                View on Google Maps
+              </a>
+            </div>
+
+            <div class="relative flex items-center">
+              <div class="flex-grow border-t border-gray-200"></div>
+              <span class="flex-shrink mx-4 text-gray-400 text-sm">or enter manually</span>
+              <div class="flex-grow border-t border-gray-200"></div>
+            </div>
+            
+            <!-- Manual Location Input -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Location Name</label>
+              <UInput
+                v-model="form.location"
+                placeholder="e.g., Shah Alam, Selangor"
+                class="w-full"
+              />
+            </div>
+            
+            <!-- Manual Coordinates (optional) -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Latitude</label>
+                <UInput
+                  v-model.number="manualLatitude"
+                  type="number"
+                  step="0.000001"
+                  placeholder="e.g., 3.0738"
+                  class="w-full"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Longitude</label>
+                <UInput
+                  v-model.number="manualLongitude"
+                  type="number"
+                  step="0.000001"
+                  placeholder="e.g., 101.5183"
+                  class="w-full"
+                />
+              </div>
+            </div>
+            
+            <p class="text-xs text-gray-400">
+              💡 Tip: You can find coordinates by right-clicking on 
+              <a href="https://maps.google.com" target="_blank" class="text-blue-500 hover:underline">Google Maps</a>
+            </p>
           </div>
         </div>
 
@@ -275,10 +353,19 @@ const maskAccountNumber = (accountNo: string) => {
 const isSubmitting = ref(false)
 const errorMessage = ref('')
 
+// Location detection
+const isDetectingLocation = ref(false)
+const locationError = ref('')
+const detectedCoords = ref<{ latitude: number; longitude: number } | null>(null)
+const manualLatitude = ref<number | null>(null)
+const manualLongitude = ref<number | null>(null)
+
 const form = reactive({
   bio: '',
   skills: [] as number[],
   location: '',
+  latitude: null as number | null,
+  longitude: null as number | null,
   bank_name: '',
   bank_account_no: '',
   bank_account_holder: ''
@@ -303,6 +390,67 @@ const selectedSkillNames = computed(() => {
   return availableSkills.value
     .filter(skill => form.skills.includes(skill.id))
     .map(skill => skill.label)
+})
+
+// Detect user location using browser geolocation API
+async function detectLocation() {
+  if (!navigator.geolocation) {
+    locationError.value = 'Geolocation is not supported by your browser'
+    return
+  }
+
+  isDetectingLocation.value = true
+  locationError.value = ''
+
+  navigator.geolocation.getCurrentPosition(
+    async (position) => {
+      const { latitude, longitude } = position.coords
+      detectedCoords.value = { latitude, longitude }
+      form.latitude = latitude
+      form.longitude = longitude
+      manualLatitude.value = latitude
+      manualLongitude.value = longitude
+      
+      // Try to get location name using reverse geocoding
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+        )
+        const data = await response.json()
+        if (data.address) {
+          const { city, town, village, state, suburb } = data.address
+          form.location = [suburb, city || town || village, state].filter(Boolean).join(', ')
+        }
+      } catch (err) {
+        console.error('Reverse geocoding failed:', err)
+        // User can still enter location name manually
+      }
+      
+      isDetectingLocation.value = false
+    },
+    (error) => {
+      const errorMessages: Record<number, string> = {
+        1: 'Permission denied. Please enable location access in your browser settings.',
+        2: 'Location information is unavailable.',
+        3: 'The request to get your location timed out.'
+      }
+      locationError.value = errorMessages[error.code] || 'Failed to detect location'
+      isDetectingLocation.value = false
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    }
+  )
+}
+
+// Watch manual coordinates and sync to form
+watch([manualLatitude, manualLongitude], ([lat, lon]) => {
+  if (lat !== null && lon !== null) {
+    form.latitude = lat
+    form.longitude = lon
+  }
 })
 
 // Validation for each step
@@ -349,7 +497,9 @@ async function submitProfile() {
       user_id: user.user?.user_id,
       bio: form.bio,
       skills: form.skills,
-      location: form.location
+      location: form.location,
+      latitude: form.latitude,
+      longitude: form.longitude
     }
 
     // Include bank info for freelancers

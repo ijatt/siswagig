@@ -5,6 +5,8 @@ interface CompleteProfileBody {
   bio: string
   skills: number[]
   location: string
+  latitude?: number | null
+  longitude?: number | null
   bank_name?: string | null
   bank_account_no?: string | null
   bank_account_holder?: string | null
@@ -23,6 +25,14 @@ export default defineEventHandler(async (event) => {
       bio: body.bio,
       location: body.location,
       profile_completed: true
+    }
+
+    // Add coordinates if provided
+    if (body.latitude !== undefined && body.latitude !== null) {
+      updateData.latitude = body.latitude
+    }
+    if (body.longitude !== undefined && body.longitude !== null) {
+      updateData.longitude = body.longitude
     }
 
     // Add bank info if provided (for freelancers)
